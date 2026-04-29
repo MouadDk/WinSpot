@@ -1,0 +1,25 @@
+{
+  "name": "winspot",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend",
+    "mobile"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace backend",
+    "dev:frontend": "npm run dev --workspace frontend",
+    "dev:mobile": "npm run dev:mobile --workspace mobile",
+    "build:backend": "npm run build --workspace backend",
+    "build:frontend": "npm run build --workspace frontend",
+    "build:mobile": "npm run build --workspace mobile"
+  },
+  "version": "1.0.0",
+  "dependencies": {
+    "@react-native/js-polyfills": "0.79.6",
+    "expo": "~53.0.27",
+    "react": "19.0.0",
+    "react-dom": "^19.1.0",
+    "react-native": "0.79.6"
+  }
+}
