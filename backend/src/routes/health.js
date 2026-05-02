@@ -1,11 +1,8 @@
-import { Router } from 'express';
+import express from 'express';
+const router = express.Router();
 
-export const healthRouter = Router();
-
-healthRouter.get('/', (_request, response) => {
-  response.json({
-    ok: true,
-    service: 'WinSpot API',
-    timestamp: new Date().toISOString()
-  });
+router.get('/', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Backend is running smoothly!' });
 });
+
+export default router;

@@ -1,76 +1,61 @@
 import express from 'express';
 import { Webhook } from 'svix';
-import { User } from '../models/User.js';
+import bodyParser from 'body-parser';
+import User from '../models/User.js'; // Don't forget the .js!
 
-export const clerkWebhookRouter = express.Router();
+const router = express.Router();
 
-clerkWebhookRouter.post('/', async (req, res) => {
+router.post('/user-created', bodyParser.raw({ type: 'application/json' }), async (req, res) => {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
 
   if (!WEBHOOK_SECRET) {
-    return res.status(500).json({ error: 'Missing CLERK_WEBHOOK_SECRET' });
+    throw new Error('Missing CLERK_WEBHOOK_SECRET in .env');
   }
 
-  const svixId = req.headers['svix-id'];
-  const svixTimestamp = req.headers['svix-timestamp'];
-  const svixSignature = req.headers['svix-signature'];
+  const svix_id = req.headers["svix-id"];
+  const svix_timestamp = req.headers["svix-timestamp"];
+  const svix_signature = req.headers["svix-signature"];
 
-  if (!svixId || !svixTimestamp || !svixSignature) {
+  if (!svix_id || !svix_timestamp || !svix_signature) {
     return res.status(400).json({ error: 'Missing svix headers' });
   }
 
-  let event;
+  const payload = req.body;
+  const wh = new Webhook(WEBHOOK_SECRET);
+  let evt;
+
   try {
-    const wh = new Webhook(WEBHOOK_SECRET);
-    event = wh.verify(req.body, {
-      'svix-id': svixId,
-      'svix-timestamp': svixTimestamp,
-      'svix-signature': svixSignature,
+    evt = wh.verify(payload, {
+      "svix-id": svix_id,
+      "svix-timestamp": svix_timestamp,
+      "svix-signature": svix_signature,
     });
   } catch (err) {
     console.error('Webhook verification failed:', err.message);
-    return res.status(400).json({ error: 'Invalid webhook signature' });
+    return res.status(400).json({ error: 'Verification failed' });
   }
 
-  const { type, data } = event;
-  console.log(`Clerk webhook received: ${type}`);
+  if (evt.type === 'user.created') {
+    const { id, email_addresses, first_name, last_name } = evt.data;
+    const primaryEmail = email_addresses[0]?.email_address;
 
-  try {
-    if (type === 'user.created') {
-      const email = data.email_addresses?.[0]?.email_address;
-
-      await User.create({
-        clerkId: data.id,
-        email: email ?? 'no-email@placeholder.com', // ← fallback
-        firstName: data.first_name ?? '',
-        lastName: data.last_name ?? '',
-        avatar: data.image_url ?? '',
+    try {
+      const newUser = new User({
+        clerkId: id,
+        email: primaryEmail,
+        firstName: first_name,
+        lastName: last_name,
       });
-      console.log('✅ User saved to MongoDB:', data.id);
+
+      await newUser.save();
+      console.log(`✅ Saved new user ${id} to MongoDB!`);
+    } catch (dbError) {
+      console.error('Database error:', dbError);
+      return res.status(500).json({ error: 'Database error' });
     }
-
-    if (type === 'user.updated') {
-      await User.findOneAndUpdate(
-        { clerkId: data.id },
-        {
-          email: data.email_addresses[0]?.email_address,
-          firstName: data.first_name ?? '',
-          lastName: data.last_name ?? '',
-          avatar: data.image_url ?? '',
-        }
-      );
-      console.log('✅ User updated in MongoDB:', data.id);
-    }
-
-    if (type === 'user.deleted') {
-      await User.findOneAndDelete({ clerkId: data.id });
-      console.log('✅ User deleted from MongoDB:', data.id);
-    }
-
-    return res.status(200).json({ received: true });
-
-  } catch (err) {
-    console.error('Error handling webhook event:', err);
-    return res.status(500).json({ error: 'Internal server error' });
   }
+
+  return res.status(200).json({ success: true });
 });
+
+export default router;
