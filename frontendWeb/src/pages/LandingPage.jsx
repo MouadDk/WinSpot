@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const LandingPage = () => {
   return (
@@ -19,9 +20,9 @@ const LandingPage = () => {
           <a href="#how-it-works" className="hover:text-cyan-500 transition-colors">How it Works</a>
           <a href="#contact" className="hover:text-cyan-500 transition-colors">Contact</a>
         </nav>
-        <button className="bg-purple-800 text-white px-6 py-2 rounded-full font-semibold hover:bg-purple-700 shadow-md shadow-purple-900/20 transition-all">
-          Login
-        </button>
+        <Link to="/choose-role" className="bg-purple-800 text-white px-6 py-2 rounded-full font-semibold hover:bg-purple-700 shadow-md shadow-purple-900/20 transition-all">
+          Login / Register
+        </Link>
       </header>
 
       {/* --- Hero Section --- */}
@@ -40,12 +41,12 @@ const LandingPage = () => {
             Take your brand to the next level. Connect, engage, and win with our next-generation platform.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
-            <button className="w-full sm:w-auto bg-gradient-to-r from-purple-800 to-purple-600 text-white px-8 py-4 rounded-full text-lg font-bold hover:scale-105 shadow-xl shadow-purple-900/30 transition-transform">
+            <Link to="/choose-role" className="w-full sm:w-auto bg-gradient-to-r from-purple-800 to-purple-600 text-white px-8 py-4 rounded-full text-lg font-bold hover:scale-105 shadow-xl shadow-purple-900/30 transition-transform block text-center">
               Launch Campaign
-            </button>
-            <button className="w-full sm:w-auto bg-white border-2 border-slate-300 text-purple-900 px-8 py-4 rounded-full text-lg font-bold hover:border-cyan-400 hover:text-cyan-600 transition-colors">
+            </Link>
+            <Link to="/choose-role" className="w-full sm:w-auto bg-white border-2 border-slate-300 text-purple-900 px-8 py-4 rounded-full text-lg font-bold hover:border-cyan-400 hover:text-cyan-600 transition-colors text-center">
               Explore Features
-            </button>
+            </Link>
           </div>
         </div>
       </section>

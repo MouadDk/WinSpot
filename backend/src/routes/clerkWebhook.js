@@ -36,8 +36,9 @@ router.post('/user-created', bodyParser.raw({ type: 'application/json' }), async
   }
 
   if (evt.type === 'user.created') {
-    const { id, email_addresses, first_name, last_name } = evt.data;
+    const { id, email_addresses, first_name, last_name, unsafe_metadata } = evt.data;
     const primaryEmail = email_addresses[0]?.email_address;
+    const role = unsafe_metadata?.role || 'influencer';
 
     try {
       const newUser = new User({
@@ -45,10 +46,11 @@ router.post('/user-created', bodyParser.raw({ type: 'application/json' }), async
         email: primaryEmail,
         firstName: first_name,
         lastName: last_name,
+        role: role,
       });
 
       await newUser.save();
-      console.log(`✅ Saved new user ${id} to MongoDB!`);
+      console.log(`✅ Saved new user ${id} (role: ${role}) to MongoDB!`);
     } catch (dbError) {
       console.error('Database error:', dbError);
       return res.status(500).json({ error: 'Database error' });
