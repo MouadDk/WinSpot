@@ -2,27 +2,30 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { SignedIn } from '@clerk/clerk-react';
 import LandingPage from './pages/LandingPage';
 import RoleSelection from './pages/RoleSelection';
-import MerchantAuth from './pages/MerchantAuth';
+import RestaurantAuth from './pages/RestaurantAuth';
 import InfluencerAuth from './pages/InfluencerAuth';
-import MerchantDashboard from './pages/MerchantDashboard';
+import RestaurantDashboard from './pages/RestaurantDashboard';
 import InfluencerDashboard from './pages/InfluencerDashboard';
+import ThemeToggle from './components/ui/ThemeToggle';
+import RoleGuard from './components/auth/RoleGuard';
 
 function App() {
   return (
+    <>
+    <ThemeToggle />
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/choose-role" element={<RoleSelection />} />
 
-      {/* Merchant Auth Routes — no SignedOut wrapper so Clerk's
-          multi-step flow (email verification, etc.) stays mounted */}
+      {/* Restaurant Auth Routes */}
       <Route
-        path="/merchant/login/*"
-        element={<MerchantAuth isSignUp={false} />}
+        path="/restaurant/login/*"
+        element={<RestaurantAuth isSignUp={false} />}
       />
       <Route
-        path="/merchant/register/*"
-        element={<MerchantAuth isSignUp={true} />}
+        path="/restaurant/register/*"
+        element={<RestaurantAuth isSignUp={true} />}
       />
 
       {/* Influencer Auth Routes */}
@@ -37,10 +40,12 @@ function App() {
 
       {/* Protected Dashboard Routes */}
       <Route
-        path="/merchant-dashboard"
+        path="/restaurant-dashboard"
         element={
           <SignedIn>
-            <MerchantDashboard />
+            <RoleGuard allowedRole="restaurant">
+              <RestaurantDashboard />
+            </RoleGuard>
           </SignedIn>
         }
       />
@@ -48,7 +53,9 @@ function App() {
         path="/influencer-dashboard"
         element={
           <SignedIn>
-            <InfluencerDashboard />
+            <RoleGuard allowedRole="influencer">
+              <InfluencerDashboard />
+            </RoleGuard>
           </SignedIn>
         }
       />
@@ -56,6 +63,7 @@ function App() {
       {/* Catch-all: Redirect unknown routes to home */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }
 

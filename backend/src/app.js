@@ -4,6 +4,8 @@ import cors from 'cors';
 // Note: In ES Modules, you MUST include the .js extension in local imports
 import clerkWebhookRoute from './routes/clerkWebhook.js';
 import healthRoute from './routes/health.js';
+import protectedRoutes from './routes/protected.js';
+import { clerkMiddleware } from '@clerk/express';
 
 export function createApp() {
   const app = express();
@@ -21,10 +23,16 @@ export function createApp() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  // 4. Routes
-  app.use('/api/health', healthRoute);
+  // 4. Global Auth Middleware
+  // Protects everything BELOW this line.
+  // Note: Webhooks are ABOVE this line because they don't use session tokens.
+  app.use(clerkMiddleware());
 
-  // 5. Error Handling
+  // 5. Routes
+  app.use('/api/health', healthRoute);
+  app.use('/api', protectedRoutes);
+
+  // 6. Error Handling
   app.use((err, req, res, next) => {
     console.error('Server Error:', err.stack);
     res.status(500).json({ success: false, message: 'Server error' });
