@@ -6,6 +6,7 @@ import clerkWebhookRoute from './routes/clerkWebhook.js';
 import healthRoute from './routes/health.js';
 import protectedRoutes from './routes/protected.js';
 import { clerkMiddleware } from '@clerk/express';
+import { logActivity } from './config/logger.js';
 
 export function createApp() {
   const app = express();
@@ -34,7 +35,13 @@ export function createApp() {
 
   // 6. Error Handling
   app.use((err, req, res, next) => {
-    console.error('Server Error:', err.stack);
+    const userId = req.auth?.userId;
+    logActivity('error', {
+      clerkId: userId,
+      action: 'server.error',
+      status: 'failed',
+      message: err.message || 'Unknown server error'
+    });
     res.status(500).json({ success: false, message: 'Server error' });
   });
 

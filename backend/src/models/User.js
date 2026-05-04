@@ -15,9 +15,26 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: ['merchant', 'influencer', 'admin'],
-    default: 'influencer' // We will update this during the onboarding flow
+    default: 'influencer'
+  },
+  // Category for Merchant users (retrieved from Clerk publicMetadata via webhook)
+  // Examples: 'Restaurant', 'Bar', 'Sport', 'Café', 'Boutique', etc.
+  category: {
+    type: String,
+    default: null
+  },
+  winCoinsBalance: {
+    type: Number,
+    default: 0
   }
 }, { timestamps: true });
 
-// This is the crucial line that fixes your error!
+// Ensure category is only set for merchants
+userSchema.pre('save', function (next) {
+  if (this.role !== 'merchant') {
+    this.category = null;
+  }
+  next();
+});
+
 export default mongoose.model('User', userSchema);

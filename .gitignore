@@ -8,3 +8,5 @@ coverage
 .env.*
 !.env.example
 .zip
+activity.log
+package-lock.json
