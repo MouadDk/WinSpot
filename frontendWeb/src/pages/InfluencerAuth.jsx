@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sparkles, Loader2, ArrowRight } from 'lucide-react';
 import AuthLayout from '../components/layout/AuthLayout';
 import { useAuth } from '../contexts/AuthContext';
@@ -13,6 +13,61 @@ export default function InfluencerAuth({ isSignUp }) {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+
+  const GOOGLE_CLIENT_ID = '547459185528-nhb3isiepbm1tvhl4vdf5csvg3q311i5.apps.googleusercontent.com';
+
+  // Google Sign-In Handler
+  const handleGoogleResponse = async (response) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Decode the JWT token
+      const decodedToken = JSON.parse(atob(response.credential.split('.')[1]));
+      
+      const res = await fetch('http://localhost:4000/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: decodedToken.email,
+          firstName: decodedToken.given_name || '',
+          lastName: decodedToken.family_name || '',
+          googleId: decodedToken.sub
+        }),
+      });
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || 'Erreur lors de la connexion avec Google');
+      
+      login(data.token, data.user);
+      window.location.href = '/influencer-dashboard';
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Initialize Google Sign-In
+    if (window.google) {
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleResponse,
+      });
+      
+      google.accounts.id.renderButton(
+        document.getElementById('google-button'),
+        {
+          type: 'standard',
+          size: 'large',
+          width: '310',
+          theme: 'outline',
+          locale: 'fr',
+          text: isSignUp ? 'signup_with' : 'signin_with',
+        }
+      );
+    }
+  }, [isSignUp, handleGoogleResponse]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -149,6 +204,19 @@ export default function InfluencerAuth({ isSignUp }) {
               </>
             )}
           </button>
+
+          <div className="mt-4">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-300 dark:border-slate-600"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white dark:bg-slate-800/50 text-slate-500 dark:text-slate-400">Ou continuez avec</span>
+              </div>
+            </div>
+
+            <div className="mt-4" id="google-button"></div>
+          </div>
         </form>
 
         <div className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
