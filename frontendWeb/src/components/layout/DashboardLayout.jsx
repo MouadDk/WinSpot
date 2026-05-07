@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { UserButton } from '@clerk/clerk-react';
-import { Menu, X, Sun, Moon, Bell, Coins } from 'lucide-react';
+import { Menu, X, Sun, Moon, Bell, Coins, LogOut } from 'lucide-react';
 import { useDarkMode } from '../../hooks/useDarkMode';
+import { useAuth } from '../../contexts/AuthContext';
 
 const roleStyles = {
   influencer: {
@@ -30,6 +30,7 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isDark, toggle: toggleDark } = useDarkMode();
   const location = useLocation();
+  const { logout } = useAuth();
   const style = roleStyles[role];
   const brandName = role === 'influencer' ? 'Creator Hub' : 'Restaurant Hub';
 
@@ -115,19 +116,29 @@ export default function DashboardLayout({
         {/* Bottom section */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
-            <UserButton
-              appearance={{ elements: { avatarBox: 'w-9 h-9' } }}
-            />
+            <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 font-bold uppercase">
+              {user?.firstName?.[0] || 'U'}
+            </div>
             {user && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
                   {user.firstName || 'User'}
                 </p>
                 <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
-                  {user.primaryEmailAddress?.emailAddress || ''}
+                  {user.email || ''}
                 </p>
               </div>
             )}
+            <button 
+              onClick={() => {
+                logout();
+                window.location.href = '/';
+              }}
+              className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+              title="Se déconnecter"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </aside>
@@ -177,9 +188,9 @@ export default function DashboardLayout({
               </button>
               <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block" />
               <div className="hidden sm:block">
-                <UserButton
-                  appearance={{ elements: { avatarBox: 'w-9 h-9' } }}
-                />
+                <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 font-bold uppercase cursor-pointer">
+                  {user?.firstName?.[0] || 'U'}
+                </div>
               </div>
             </div>
           </div>

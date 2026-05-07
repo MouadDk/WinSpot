@@ -4,7 +4,7 @@ import { connectDatabase } from './config/db.js';
 import { logActivity } from './config/logger.js';
 
 const port = Number(process.env.PORT ?? 4000);
-const mongoUri = process.env.MONGODB_URI ?? 'mongodb://127.0.0.1:27017/winspot';
+const mongoUri = process.env.MONGODB_URI ?? 'mongodb://127.0.0.1:27017/pub2win';
 
 async function main() {
   await connectDatabase(mongoUri);

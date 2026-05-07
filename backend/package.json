@@ -7,13 +7,13 @@
     "start": "node src/index.js"
   },
   "dependencies": {
-    "@clerk/express": "^2.1.12",
+    "bcryptjs": "^3.0.3",
     "body-parser": "^2.2.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.13.2",
-    "svix": "^1.92.2",
     "winston": "^3.19.0"
   },
   "devDependencies": {

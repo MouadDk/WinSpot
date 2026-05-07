@@ -1,11 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 
-// Note: In ES Modules, you MUST include the .js extension in local imports
-import clerkWebhookRoute from './routes/clerkWebhook.js';
 import healthRoute from './routes/health.js';
 import protectedRoutes from './routes/protected.js';
-import { clerkMiddleware } from '@clerk/express';
+import authRoutes from './routes/auth.js';
+import adminRoutes from './routes/admin.js';
 import { logActivity } from './config/logger.js';
 
 export function createApp() {
@@ -13,31 +12,29 @@ export function createApp() {
 
   // 1. CORS
   app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176'],
     credentials: true
   }));
 
-  // 2. Webhooks (MUST be before express.json)
-  app.use('/api/webhooks', clerkWebhookRoute);
-
-  // 3. Body Parsers
+  // 2. Body Parsers
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  // 4. Global Auth Middleware
-  // Protects everything BELOW this line.
-  // Note: Webhooks are ABOVE this line because they don't use session tokens.
-  app.use(clerkMiddleware());
-
-  // 5. Routes
+  // 3. Public Routes
   app.use('/api/health', healthRoute);
+  app.use('/api/auth', authRoutes);
+
+  // 4. Protected Routes
   app.use('/api', protectedRoutes);
+  
+  // 5. Admin Routes
+  app.use('/api/admin', adminRoutes);
 
   // 6. Error Handling
   app.use((err, req, res, next) => {
     const userId = req.auth?.userId;
     logActivity('error', {
-      clerkId: userId,
+      userId: userId || 'unknown',
       action: 'server.error',
       status: 'failed',
       message: err.message || 'Unknown server error'

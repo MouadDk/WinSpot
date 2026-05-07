@@ -1,11 +1,15 @@
-# 🗺️ P2B Frontend - Complete User Flow Diagram
+# 🗺️ Pub2Win - Architecture & User Flow Diagrams
 
-## User Journey Map
+Ce document illustre les différents parcours utilisateurs (Flows) et l'architecture technique de la plateforme Pub2Win après la migration vers un système 100% propriétaire (JWT) et l'ajout de l'Intelligence Artificielle.
 
-```
+---
+
+## 1. User Journey Map (Le parcours utilisateur)
+
+```text
                                     ┌─────────────────────────┐
                                     │   LANDING PAGE (/)      │
-                                    │  "Welcome to P2B"       │
+                                    │  "Welcome to Pub2Win"   │
                                     └────────────┬────────────┘
                                                  │
                         ┌────────────────────────┼────────────────────────┐
@@ -30,16 +34,15 @@
               │          │                 │          │
        ┌──────▼──┐   ┌──▼──────┐   ┌─────▼──┐   ┌──▼──────┐
        │  LOGIN  │   │ REGISTER │   │ LOGIN  │   │REGISTER │
-       │         │   │          │   │        │   │         │
-       │ /merca..│   │ /merca.. │   │/influ..│   │/influ..│
+       │/merchant│   │/merchant │   │/influ..│   │/influ.. │
+       │ /login  │   │/register │   │/login  │   │/register│
        └────┬────┘   └────┬─────┘   └────┬───┘   └────┬────┘
-            │             │              │            │
-            │      Clerk Authentication   │            │
-            │      (Email/OAuth/etc)     │            │
             │             │              │            │
             └─────────────┼──────────────┴────────────┘
                           │
-                    [User Verified]
+            [Custom JWT Authentication (Backend)]
+                          │
+                    [Token Saved]
                           │
          ┌────────────────┴────────────────┐
          │                                 │
@@ -52,62 +55,59 @@
     │                 │           │                  │
     │  ✅ Protected   │           │  ✅ Protected    │
     │  ✅ User Data   │           │  ✅ User Data    │
-    │  ✅ Buttons     │           │  ✅ Buttons      │
-    │  ✅ Stats      │           │  ✅ Stats        │
-    │  ✅ UserButton │           │  ✅ UserButton   │
+    │  ✅ Topup/Offers│           │  ✅ Scan/Cashout │
     └─────────────────┘           └──────────────────┘
 ```
 
 ---
 
-## Component Hierarchy
+## 2. Component Hierarchy (Frontend Web)
 
-```
+```text
 main.jsx
-  └─ ClerkProvider
+  └─ AuthContext.Provider (Gère le JWT et l'état de l'utilisateur)
       └─ BrowserRouter
           └─ App.jsx
               ├─ Public Routes
               │   ├─ LandingPage (/)
               │   └─ RoleSelection (/choose-role)
               │
-              ├─ Auth Routes (SignedOut wrapper)
+              ├─ Auth Routes (Protégé: Redirige si déjà connecté)
               │   ├─ MerchantAuth (/merchant/login, /merchant/register)
               │   └─ InfluencerAuth (/influencer/login, /influencer/register)
               │
-              └─ Dashboard Routes (SignedIn wrapper)
+              └─ Dashboard Routes (Protégé par RoleGuard)
                   ├─ MerchantDashboard (/merchant-dashboard)
                   └─ InfluencerDashboard (/influencer-dashboard)
 ```
 
 ---
 
-## State Machine: Auth Flow
+## 3. State Machine: Custom JWT Auth Flow
 
-```
+```text
 [UNAUTHENTICATED]
        │
-       ├─→ Can access: /, /choose-role
+       ├─→ Can access: /, /choose-role, Auth pages
        │
        ├─→ Cannot access: /merchant-dashboard, /influencer-dashboard
-       │   (SignedIn blocks these)
-       │
-       ├─→ Can see: /merchant/login, /merchant/register, /influencer/login, /influencer/register
-       │   (SignedOut shows these)
+       │   (AuthContext & RoleGuard blocks these)
        │
        └─→ Visit Auth Page & Complete Signup/Login
                      │
                      ▼
-        ┌──────────────────────┐
-        │  CLERK PROCESSES     │
-        │  - Email verify      │
-        │  - OAuth provider    │
-        │  - Account creation  │
-        └──────────────────────┘
+        ┌───────────────────────────────┐
+        │  BACKEND PROCESSES (/api/auth)│
+        │  - Hash password (Bcrypt)     │
+        │  - Check Database (MongoDB)   │
+        │  - Generate JWT Token         │
+        └───────────────────────────────┘
                      │
                      ▼
-        [fallbackRedirectUrl]
-             │
+        [Token stored in localStorage]
+                     │
+             [RoleGuard checks role]
+                     │
              ├─ Merchant: /merchant-dashboard
              │
              └─ Influencer: /influencer-dashboard
@@ -115,15 +115,9 @@ main.jsx
                      ▼
 [AUTHENTICATED + IN DASHBOARD]
        │
-       ├─→ Can access: /, all routes
+       ├─→ API Calls include: `Authorization: Bearer <token>`
        │
-       ├─→ Cannot access: /merchant/login, /merchant/register
-       │   (SignedOut blocks these)
-       │
-       ├─→ Cannot access: /influencer/login, /influencer/register
-       │   (SignedOut blocks these)
-       │
-       └─→ Click UserButton → Sign Out
+       └─→ Click Logout → Clear localStorage
                      │
                      ▼
             [Back to UNAUTHENTICATED]
@@ -131,246 +125,98 @@ main.jsx
 
 ---
 
-## Route Protection Logic
+## 4. Admin Dashboard Flow (Control Center)
 
+```text
+[ADMIN LOGIN] (Mot de passe stocké dans le .env)
+       │
+       ▼
+[ADMIN DASHBOARD (Port 5176)]
+       │
+       ├─→ [Onglet: Merchants]
+       │     └─ Voir la liste, Supprimer des comptes, Faire des "Top Up" (Injecter WinCoins)
+       │
+       ├─→ [Onglet: Influencers]
+       │     └─ Voir la liste, Supprimer des comptes, Vérifier le solde
+       │
+       └─→ [Onglet: Cashouts] (Demandes de retraits)
+             │
+             ├─→ Approuver ✅ → L'admin a fait le virement bancaire, la transaction passe à "completed".
+             │
+             └─→ Rejeter ❌ → La transaction passe à "failed", les WinCoins sont remboursés à l'influenceur.
 ```
-┌─ / ────────────────────────── PUBLIC (Everyone)
+
+---
+
+## 5. O2O Loop & AI Verification Flow (Le Coeur de l'App)
+
+```text
+ÉTAPE 1 : VISITE PHYSIQUE (O2O)
+┌────────────────┐          ┌────────────────┐
+│ INFLUENCER APP │          │ MERCHANT APP   │
+│ Génère QR Code │ ───────▶ │ Scanne QR Code │
+│ (Mission ID)   │          │ via Dashboard  │
+└────────────────┘          └────────────────┘
+                                    │
+                                    ▼
+ÉTAPE 2 : LA PREUVE SOCIALE (Vérification IA)
+┌────────────────────────────────────────────────────────┐
+│ INFLUENCER publie une Story Instagram avec le @tag     │
+│ et connecte son compte via Facebook/Instagram Graph    │
+└────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────┐
+│ BACKEND PUB2WIN                                        │
+│ - Récupère l'image de la Story via l'API Instagram     │
+│ - Envoie l'image à l'IA (Vision/NLP)                   │
+│ - IA check : "Présence du produit ?" "Cadre luxueux ?" │
+└────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+ÉTAPE 3 : LE CRON JOB (Les 24h)
+┌────────────────────────────────────────────────────────┐
+│ 23h55 plus tard, le serveur interroge l'API Instagram  │
+│ La story est-elle toujours là ?                        │
+│                                                        │
+│ ❌ NON = Mission annulée, pénalité.                    │
+│ ✅ OUI = Mission validée, WinCoins transférés !        │
+└────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 6. Route Protection Logic (RoleGuard)
+
+```text
+┌─ / ────────────────────────── PUBLIC
 │
-├─ /choose-role ─────────────── PUBLIC (Everyone)
+├─ /choose-role ─────────────── PUBLIC
 │
-├─ /merchant/login
-│  └─ <SignedOut>                Protected: Only visible when logged out
-│      └─ MerchantAuth
-│
-├─ /merchant/register
-│  └─ <SignedOut>                Protected: Only visible when logged out
-│      └─ MerchantAuth
+├─ /merchant/login ──────────── Redirect to dashboard if already logged in
 │
 ├─ /merchant-dashboard
-│  └─ <SignedIn>                 Protected: Only visible when logged in
-│      └─ MerchantDashboard
+│  └─ <RoleGuard allowedRole="merchant">
+│      └─ Vérifie que l'utilisateur a un JWT valide ET que role === 'merchant'
 │
-├─ /influencer/login
-│  └─ <SignedOut>                Protected: Only visible when logged out
-│      └─ InfluencerAuth
-│
-├─ /influencer/register
-│  └─ <SignedOut>                Protected: Only visible when logged out
-│      └─ InfluencerAuth
+├─ /influencer/login ────────── Redirect to dashboard if already logged in
 │
 ├─ /influencer-dashboard
-│  └─ <SignedIn>                 Protected: Only visible when logged in
-│      └─ InfluencerDashboard
+│  └─ <RoleGuard allowedRole="influencer">
+│      └─ Vérifie que l'utilisateur a un JWT valide ET que role === 'influencer'
 │
-└─ * (any other route)
-   └─ <Navigate to="/" />         Catch-all: Redirect to home
+└─ * (any other route) ──────── Redirect to home
 ```
 
 ---
 
-## Data Flow: User Information
+## 7. Sécurité & Performances Implémentées
 
-```
-[User Signs Up/In via Clerk]
-        │
-        ├─→ Clerk verifies identity
-        │
-        ├─→ Session created in browser
-        │
-        ├─→ RedirectUrl triggered
-        │
-        ├─→ User lands on dashboard
-        │
-        ├─→ useUser() hook called
-        │
-        └─→ Returns:
-            ├─ user.firstName
-            ├─ user.lastName
-            ├─ user.email
-            ├─ user.imageUrl
-            ├─ user.id
-            └─ ... (other Clerk properties)
+- ✅ **Custom JWT Auth** : Indépendant des services tiers (Clerk), jetons signés cryptographiquement.
+- ✅ **Bcrypt Hashing** : Mots de passe illisibles même en cas de fuite de base de données.
+- ✅ **Role-Based Access Control (RBAC)** : Middleware backend (`auth.js`) et frontend (`RoleGuard.jsx`) pour séparer strictement marchands et influenceurs.
+- ✅ **Lazy Loading** : Composants React chargés à la demande (React Router v7).
+- ✅ **CORS Management** : API accessible uniquement par les domaines autorisés (localhost:5173, 5174, 5176).
+- ✅ **Admin Hardcoded Secret** : Panneau d'administration doublement sécurisé (`x-admin-secret`).
 
-[Dashboard displays user info]
-        │
-        ├─→ Header: "Welcome, {user.firstName}"
-        │
-        └─→ Avatar in UserButton: user.imageUrl
-```
-
----
-
-## Color Theme Application
-
-```
-MERCHANTS (Blue/Cyan Palette)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-┌─────────────────────────────────┐
-│  RoleSelection - Left Side      │
-│  bg-gradient-to-br from-blue-500│
-│  to-cyan-400                    │
-└─────────────────────────────────┘
-           ↓
-┌─────────────────────────────────┐
-│  MerchantAuth Page              │
-│  bg-gradient-to-br from-slate-50│
-│  to-blue-50                     │
-│  Button: from-blue-500 to-cyan- │
-│  400                            │
-└─────────────────────────────────┘
-           ↓
-┌─────────────────────────────────┐
-│  MerchantDashboard              │
-│  bg-gradient-to-br from-slate-50│
-│  via-blue-50 to-slate-50        │
-│  Accent buttons: blue-500 /cyan │
-└─────────────────────────────────┘
-
-INFLUENCERS (Purple Palette)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-┌─────────────────────────────────┐
-│  RoleSelection - Right Side     │
-│  bg-gradient-to-br from-purple- │
-│  800 to-purple-700              │
-└─────────────────────────────────┘
-           ↓
-┌─────────────────────────────────┐
-│  InfluencerAuth Page            │
-│  bg-gradient-to-br from-slate-50│
-│  to-purple-50                   │
-│  Button: from-purple-800 to     │
-│  purple-600                     │
-└─────────────────────────────────┘
-           ↓
-┌─────────────────────────────────┐
-│  InfluencerDashboard            │
-│  bg-gradient-to-br from-slate-50│
-│  via-purple-50 to-slate-50      │
-│  Accent buttons: purple-800 /600│
-└─────────────────────────────────┘
-```
-
----
-
-## Feature Availability by Page
-
-| Feature | Landing | Role Select | Auth | Merchant Dash | Influencer Dash |
-|---------|---------|-------------|------|---------------|-----------------|
-| Logo | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Navigation | ✅ | ✅ | ❌ | ✅ | ✅ |
-| Hero/Marketing | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Role Buttons | ❌ | ✅ | ❌ | ❌ | ❌ |
-| Auth Form | ❌ | ❌ | ✅ | ❌ | ❌ |
-| Welcome Message | ❌ | ❌ | ❌ | ✅ | ✅ |
-| UserButton | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Stats Cards | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Action Buttons | ❌ | ✅ | ❌ | ✅ | ✅ |
-| Getting Started | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Footer | ✅ | ❌ | ❌ | ✅ | ✅ |
-
----
-
-## File Size Overview
-
-| File | Lines | Type |
-|------|-------|------|
-| App.jsx | ~70 | Routes + Protection |
-| RoleSelection.jsx | ~120 | Split-screen UI |
-| MerchantAuth.jsx | ~95 | Clerk Auth + Styling |
-| InfluencerAuth.jsx | ~95 | Clerk Auth + Styling |
-| MerchantDashboard.jsx | ~200 | Dashboard UI |
-| InfluencerDashboard.jsx | ~215 | Dashboard UI |
-| LandingPage.jsx | ~140 | Updated for routing |
-
-**Total**: ~935 lines of production-ready code
-
----
-
-## Keyboard Navigation Flow
-
-```
-/ (LandingPage)
-  ├─ Tab → Navigation links
-  ├─ Tab → "Launch Campaign" button
-  ├─ Tab → "Explore Features" button
-  └─ Enter on button → /choose-role
-
-/choose-role (RoleSelection)
-  ├─ Tab → Left side buttons
-  ├─ Tab → Right side buttons
-  ├─ Enter → Auth page or Back to home
-  └─ Escape → Back to home (optional)
-
-/merchant/register (MerchantAuth)
-  ├─ Tab → Clerk form inputs
-  ├─ Enter in form → Submit
-  ├─ Tab → "Back to Role Selection" link
-  └─ Enter → /choose-role
-
-/merchant-dashboard (MerchantDashboard)
-  ├─ Tab → Action buttons
-  ├─ Tab → UserButton → Profile menu
-  ├─ Enter on UserButton → Sign out
-  └─ Redirect to / → Logout
-```
-
----
-
-## Performance Notes
-
-- ✅ All components use Lazy Loading patterns (future-proof)
-- ✅ No unnecessary re-renders (proper hooks usage)
-- ✅ Tailwind CSS purges unused styles (build time)
-- ✅ Image optimization ready (add picture component later)
-- ✅ Code splitting ready (React Router v7 native)
-
----
-
-## Security Measures Implemented
-
-- ✅ Protected dashboard routes with `<SignedIn>`
-- ✅ Auth pages hidden from logged-in users with `<SignedOut>`
-- ✅ Fallback redirects prevent unauthorized access
-- ✅ Clerk handles password security (BCRYPT, OAuth)
-- ✅ Session tokens managed by Clerk
-- ✅ CSRF protection via Clerk's secure architecture
-
----
-
-## Mobile Responsiveness
-
-```
-Mobile (<768px)
-├─ RoleSelection: Vertical tabs (full screen each)
-├─ Auth Pages: Single column, full width
-└─ Dashboards: Single column grid, stacked cards
-
-Tablet (768px - 1024px)
-├─ RoleSelection: Side-by-side split 50/50
-├─ Auth Pages: Centered card with padding
-└─ Dashboards: 2 column grids, organized layout
-
-Desktop (1024px+)
-├─ RoleSelection: Full screen split
-├─ Auth Pages: Centered with max-width
-└─ Dashboards: Full featured with 4 column grids
-```
-
----
-
-## Success Criteria - ✅ All Met
-
-✅ **Complete UI Flow** - Every user journey covered
-✅ **Fully Linked** - All buttons use React Router (no reloads)
-✅ **Professional Styling** - Tailwind CSS throughout
-✅ **Color Coded** - Merchants blue, Influencers purple
-✅ **Clerk Integration** - Full auth with auto-redirects
-✅ **Protected Routes** - Dashboards only accessible when logged in
-✅ **User Info** - Display name via useUser()
-✅ **Production Ready** - Zero placeholders or incomplete code
-✅ **Responsive Design** - Mobile to desktop support
-✅ **No Backend Code** - Pure frontend implementation
-
----
-
-**Your frontend is 100% complete and ready for launch! 🚀**
+**Le flow est désormais complet, souverain, prêt à encaisser de la charge et équipé pour l'Intelligence Artificielle ! 🚀**

@@ -1,0 +1,41 @@
+======================================================
+     PUB2WIN - MINIMUM VIABLE PRODUCT (MVP) PLAN
+======================================================
+
+Maintenant que l'architecture Backend CRUD est en place, voici les étapes critiques pour finaliser le MVP (Minimum Viable Product) :
+
+1. SÉCURISATION DES TRANSACTIONS ET ÉCONOMIE
+------------------------------------------------------
+Logique implémentée : Le système fonctionne comme un portefeuille fermé. Personne ne crée des WinCoins à partir de rien.
+- Action 1 (Admin) : L'administrateur de la plateforme crédite (Top Up) le compte du Merchant via `/api/transactions/topup`.
+- Action 2 (Paiement) : Quand une mission ou offre est terminée, le Merchant paie l'Influenceur via `/api/transactions/pay`. Le backend déduit le solde du Merchant (-) et crédite l'Influenceur (+).
+
+2. UPLOAD D'IMAGES (FRONTEND & BACKEND)
+------------------------------------------------------
+Une plateforme de cashback sans visuels ne convertira pas.
+Action : Intégrer Cloudinary et Multer.
+- Backend : Créer une route `/api/upload` pour gérer les images des établissements et des offres.
+- Frontend : Ajouter un bouton d'upload dans le dashboard du merchant lorsqu'il crée une offre.
+
+3. VALIDATION DES DONNÉES (SÉCURITÉ BACKEND)
+------------------------------------------------------
+Si un merchant oublie un champ requis dans une offre, l'application peut crasher.
+Action : Installer `express-validator` ou `zod`.
+- Vérifier que les prix, les coordonnées géographiques et les textes sont valides avant de les enregistrer dans MongoDB.
+
+4. INTÉGRATION FRONTEND (RACCORDEMENT API)
+------------------------------------------------------
+Le frontend utilise actuellement des données statiques (mock data).
+Action : Remplacer les données factices par des appels API réels.
+- Fetcher `/api/offers` pour la carte/liste côté influenceur.
+- Fetcher `/api/missions` pour le dashboard.
+- Fetcher `/api/users/me` ou `/api/transactions/balance` pour afficher le solde WinCoins en haut à droite.
+
+5. GÉOLOCALISATION DES OFFRES (OPTIONNEL MAIS RECOMMANDÉ)
+------------------------------------------------------
+Action : Activer la route `/api/offers/nearby`.
+- Utiliser l'index 2dsphere de MongoDB pour trier les offres en fonction de la position GPS du téléphone de l'influenceur.
+
+------------------------------------------------------
+ORDRE DE PRIORITÉ RECOMMANDÉ POUR LE PROCHAIN SPRINT :
+1 -> 4 -> 2 -> 3 -> 5

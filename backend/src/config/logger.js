@@ -7,11 +7,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..', '..');
 
-const logFormat = winston.format.printf(({ timestamp, level, clerkId, action, status, message }) => {
+const logFormat = winston.format.printf(({ timestamp, level, userId, action, status, message }) => {
   const parts = [
     `[${timestamp}]`,
     `[${level.toUpperCase()}]`,
-    clerkId ? `[ClerkID: ${clerkId}]` : '[ClerkID: N/A]',
+    userId ? `[UserID: ${userId}]` : '[UserID: N/A]',
     action ? `[Action: ${action}]` : '',
     status ? `[Status: ${status}]` : '',
     message
@@ -47,13 +47,13 @@ const logger = winston.createLogger({
  * Log an activity with structured metadata.
  * @param {'info'|'warn'|'error'} level - Log level
  * @param {Object} meta - Structured log metadata
- * @param {string} [meta.clerkId] - Clerk user ID
+ * @param {string} [meta.userId] - User ID
  * @param {string} meta.action - Action performed (e.g. 'user.created', 'transaction.gain')
  * @param {string} meta.status - Status (e.g. 'success', 'failed', 'denied')
  * @param {string} [meta.message] - Additional details
  */
-export function logActivity(level, { clerkId, action, status, message = '' }) {
-  logger.log(level, message, { clerkId, action, status });
+export function logActivity(level, { userId, action, status, message = '' }) {
+  logger.log(level, message, { userId, action, status });
 }
 
 export default logger;

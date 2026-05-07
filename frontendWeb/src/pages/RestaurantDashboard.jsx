@@ -1,4 +1,4 @@
-import { useUser } from '@clerk/clerk-react';
+import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard,
   Megaphone,
@@ -122,7 +122,7 @@ const navItems = [
 
 // ─── Component ──────────────────────────────────────────────
 export default function RestaurantDashboard() {
-  const { user } = useUser();
+  const { user } = useAuth();
 
   return (
     <DashboardLayout role="restaurant" user={user} navItems={navItems}>

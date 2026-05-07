@@ -3,10 +3,11 @@ import mongoose from 'mongoose';
 const MIN_WITHDRAWAL = 20;
 
 const transactionSchema = new mongoose.Schema({
-  // Clerk ID of the user who made the transaction
-  clerkId: {
-    type: String,
-    required: [true, 'clerkId (Clerk ID) is required'],
+  // ID of the user who made the transaction
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'userId is required'],
     index: true
   },
   type: {
@@ -41,6 +42,17 @@ const transactionSchema = new mongoose.Schema({
     type: String,
     enum: ['pending', 'completed', 'failed'],
     default: 'completed'
+  },
+  // Added for cashouts: 'paypal' or 'bank'
+  paymentMethod: {
+    type: String,
+    enum: ['paypal', 'bank', null],
+    default: null
+  },
+  // Added for cashouts: PayPal email or Bank RIB
+  paymentDetails: {
+    type: String,
+    default: ''
   }
 }, { timestamps: true });
 

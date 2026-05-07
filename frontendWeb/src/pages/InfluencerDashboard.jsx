@@ -1,4 +1,4 @@
-import { useUser } from '@clerk/clerk-react';
+import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard,
   MapPin,
@@ -119,7 +119,7 @@ const navItems = [
 
 // ─── Component ──────────────────────────────────────────────
 export default function InfluencerDashboard() {
-  const { user } = useUser();
+  const { user } = useAuth();
 
   return (
     <DashboardLayout role="influencer" user={user} navItems={navItems}>

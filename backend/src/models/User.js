@@ -1,14 +1,14 @@
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
-  clerkId: { 
-    type: String, 
-    required: true, 
-    unique: true 
-  },
   email: { 
     type: String, 
-    required: true 
+    required: true,
+    unique: true
+  },
+  password: {
+    type: String,
+    required: true
   },
   firstName: String,
   lastName: String,
@@ -17,8 +17,6 @@ const userSchema = new mongoose.Schema({
     enum: ['merchant', 'influencer', 'admin'],
     default: 'influencer'
   },
-  // Category for Merchant users (retrieved from Clerk publicMetadata via webhook)
-  // Examples: 'Restaurant', 'Bar', 'Sport', 'Café', 'Boutique', etc.
   category: {
     type: String,
     default: null

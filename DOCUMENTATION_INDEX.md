@@ -43,7 +43,7 @@
 ## 📁 Files Structure
 
 ```
-WinSpot/
+Pub2Win/
 ├─ 📄 DELIVERY_SUMMARY.md           ← Project overview
 ├─ 📄 QUICK_REFERENCE.md            ← 3-minute setup guide
 ├─ 📄 FRONTEND_SETUP_GUIDE.md       ← Complete guide with troubleshooting

@@ -1,5 +1,4 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { SignedIn } from '@clerk/clerk-react';
 import LandingPage from './pages/LandingPage';
 import RoleSelection from './pages/RoleSelection';
 import RestaurantAuth from './pages/RestaurantAuth';
@@ -42,21 +41,17 @@ function App() {
       <Route
         path="/restaurant-dashboard"
         element={
-          <SignedIn>
-            <RoleGuard allowedRole="restaurant">
-              <RestaurantDashboard />
-            </RoleGuard>
-          </SignedIn>
+          <RoleGuard allowedRole="merchant">
+            <RestaurantDashboard />
+          </RoleGuard>
         }
       />
       <Route
         path="/influencer-dashboard"
         element={
-          <SignedIn>
-            <RoleGuard allowedRole="influencer">
-              <InfluencerDashboard />
-            </RoleGuard>
-          </SignedIn>
+          <RoleGuard allowedRole="influencer">
+            <InfluencerDashboard />
+          </RoleGuard>
         }
       />
 

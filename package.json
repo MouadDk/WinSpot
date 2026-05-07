@@ -1,5 +1,5 @@
 {
-  "name": "winspot",
+  "name": "pub2win",
   "private": true,
   "workspaces": [
     "backend",
