@@ -70,7 +70,7 @@ export default function InfluencerAuth({ isSignUp }) {
       brandTitle="Monetize Your Influence"
       brandSubtitle="Discover exclusive local offers, visit premium spots, and earn WinCoins for your authentic content."
       brandIcon={Sparkles}
-      accentColor="violet"
+      accentColor="purple"
       backLink="/choose-role"
     >
       <div className="bg-white dark:bg-slate-800/50 rounded-2xl shadow-xl dark:shadow-slate-900/50 p-8 border border-slate-100 dark:border-slate-700/50 max-w-md w-full mx-auto">

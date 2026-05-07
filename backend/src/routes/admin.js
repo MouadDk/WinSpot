@@ -34,6 +34,29 @@ router.get('/influencers', async (req, res) => {
   }
 });
 
+// Get admin dashboard stats
+router.get('/stats', async (req, res) => {
+  try {
+    const [totals] = await User.aggregate([
+      {
+        $group: {
+          _id: null,
+          circulatingWinCoins: { $sum: { $ifNull: ['$winCoinsBalance', 0] } }
+        }
+      }
+    ]);
+
+    res.json({
+      success: true,
+      stats: {
+        circulatingWinCoins: totals?.circulatingWinCoins ?? 0
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Delete a user (Merchant or Influencer)
 router.delete('/users/:id', async (req, res) => {
   try {

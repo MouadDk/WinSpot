@@ -13,6 +13,7 @@ function App() {
   const [merchants, setMerchants] = useState([]);
   const [influencers, setInfluencers] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
+  const [circulatingCoins, setCirculatingCoins] = useState(0);
   const [loading, setLoading] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState({});
   const [activeTab, setActiveTab] = useState('merchants');
@@ -64,18 +65,21 @@ function App() {
     setLoading(true);
     try {
       const headers = { 'x-admin-secret': secret };
-      const [merchRes, infRes, withRes] = await Promise.all([
+      const [merchRes, infRes, withRes, statsRes] = await Promise.all([
         fetch(`${API_URL}/admin/merchants`, { headers }),
         fetch(`${API_URL}/admin/influencers`, { headers }),
-        fetch(`${API_URL}/admin/withdrawals/pending`, { headers })
+        fetch(`${API_URL}/admin/withdrawals/pending`, { headers }),
+        fetch(`${API_URL}/admin/stats`, { headers })
       ]);
       const merchData = await merchRes.json();
       const infData = await infRes.json();
       const withData = await withRes.json();
+      const statsData = await statsRes.json();
       
       if (merchData.success) setMerchants(merchData.merchants);
       if (infData.success) setInfluencers(infData.influencers);
       if (withData.success) setWithdrawals(withData.transactions);
+      if (statsData.success) setCirculatingCoins(statsData.stats?.circulatingWinCoins ?? 0);
     } catch (err) {
       console.error('Failed to fetch data', err);
     }
@@ -259,6 +263,13 @@ function App() {
               <div className="stat-value" style={{ color: '#f59e0b' }}>
                 {withdrawals.length}
                 <span style={{ fontSize: '1.2rem', marginLeft: '0.5rem' }}>⏳</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-title">WinCoins en circulation</div>
+              <div className="stat-value" style={{ color: '#a78bfa' }}>
+                {Number(circulatingCoins || 0).toLocaleString()}
+                <span style={{ fontSize: '1.2rem', marginLeft: '0.5rem' }}>🪙</span>
               </div>
             </div>
           </div>
