@@ -1,125 +1,119 @@
+import { useEffect, useState } from 'react';
+import { Loader2, LayoutDashboard, MapPin, FileText, Wallet, Settings, Sparkles, Coins, Eye, TrendingUp, RefreshCw } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import {
-  LayoutDashboard,
-  MapPin,
-  FileText,
-  Wallet,
-  Settings,
-  Zap,
-  Coins,
-  Eye,
-  TrendingUp,
-} from 'lucide-react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import MetricCard from '../components/dashboard/MetricCard';
-import VenueCard from '../components/dashboard/VenueCard';
-import PublicationTask from '../components/dashboard/PublicationTask';
-
-// ─── Mock Data ──────────────────────────────────────────────
-const metrics = [
-  {
-    title: 'Active Publications',
-    value: '3',
-    icon: FileText,
-    trend: '+2 this week',
-    trendDirection: 'up',
-    iconBg: 'bg-purple-100 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400',
-  },
-  {
-    title: 'WinCoins Balance',
-    value: '1,240',
-    icon: Coins,
-    trend: '+320 this month',
-    trendDirection: 'up',
-    iconBg: 'bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400',
-  },
-  {
-    title: 'Total Impressions',
-    value: '18.2K',
-    icon: Eye,
-    trend: '+12% vs last week',
-    trendDirection: 'up',
-    iconBg: 'bg-blue-100 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400',
-  },
-  {
-    title: 'Engagement Rate',
-    value: '4.8%',
-    icon: TrendingUp,
-    trend: '+0.6%',
-    trendDirection: 'up',
-    iconBg: 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
-  },
-];
-
-const nearbyVenues = [
-  {
-    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop',
-    name: 'Maison Lulu',
-    cuisine: 'French Bistro',
-    location: 'Casablanca, Maarif',
-    winCoinsReward: 150,
-    distance: '1.2 km',
-    rating: 4.8,
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=300&fit=crop',
-    name: 'Sky Lounge Bar',
-    cuisine: 'Cocktail Bar',
-    location: 'Casablanca, Corniche',
-    winCoinsReward: 200,
-    distance: '3.5 km',
-    rating: 4.6,
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=400&h=300&fit=crop',
-    name: 'Sakura Sushi',
-    cuisine: 'Japanese',
-    location: 'Rabat, Agdal',
-    winCoinsReward: 120,
-    distance: '5.0 km',
-    rating: 4.9,
-  },
-];
-
-const publicationTasks = [
-  {
-    platform: 'instagram',
-    requirement: 'Post an Instagram Story tagging @MaisonLulu with location',
-    reward: 150,
-    status: 'pending',
-    dueDate: 'May 5',
-    venueName: 'Maison Lulu',
-  },
-  {
-    platform: 'instagram',
-    requirement: 'Share a Reel reviewing 2 cocktails at Sky Lounge',
-    reward: 200,
-    status: 'submitted',
-    dueDate: 'May 3',
-    venueName: 'Sky Lounge Bar',
-  },
-  {
-    platform: 'instagram',
-    requirement: 'Post a carousel of 3+ food photos at Sakura Sushi',
-    reward: 120,
-    status: 'approved',
-    dueDate: 'Apr 28',
-    venueName: 'Sakura Sushi',
-  },
-];
+import OfferCard from '../components/dashboard/OfferCard';
+import { apiUrl, authHeaders, parseApiResponse } from '../lib/api';
 
 // ─── Navigation Items ───────────────────────────────────────
 const navItems = [
   { label: 'Overview', icon: LayoutDashboard, href: '/influencer-dashboard', active: true },
-  { label: 'Venues', icon: MapPin, href: '#' },
+  { label: 'Offers', icon: MapPin, href: '#' },
   { label: 'My Publications', icon: FileText, href: '#' },
   { label: 'Wallet', icon: Wallet, href: '#' },
   { label: 'Settings', icon: Settings, href: '#' },
 ];
 
+const buildMetrics = (offers) => {
+  const activeOffers = offers.filter((offer) => offer.isActive);
+  const getRewardValue = (offer) => Number(offer.winCoinsPerPublication ?? offer.winCoinsReward ?? 0);
+  const averageReward = activeOffers.length > 0
+    ? activeOffers.reduce((sum, offer) => sum + getRewardValue(offer), 0) / activeOffers.length
+    : 0;
+  const bestReward = activeOffers.length > 0
+    ? Math.max(...activeOffers.map((offer) => getRewardValue(offer)))
+    : 0;
+  const averageMinSpend = activeOffers.length > 0
+    ? activeOffers.reduce((sum, offer) => sum + Number(offer.minConsumption || 0), 0) / activeOffers.length
+    : 0;
+
+  return [
+    {
+      title: 'Live Offers',
+      value: activeOffers.length.toString(),
+      icon: MapPin,
+      trend: offers.length > 0 ? `${offers.length} total` : 'No offers yet',
+      trendDirection: 'up',
+      iconBg: 'bg-purple-100 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400',
+    },
+    {
+      title: 'Avg Reward / Publication',
+      value: `${averageReward.toFixed(0)}`,
+      icon: Coins,
+      trend: `Best offer: ${bestReward}`,
+      trendDirection: 'up',
+      iconBg: 'bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400',
+    },
+    {
+      title: 'Average Min Price',
+      value: `${averageMinSpend.toFixed(0)}`,
+      icon: Eye,
+      trend: 'Required spend',
+      trendDirection: 'neutral',
+      iconBg: 'bg-blue-100 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400',
+    },
+    {
+      title: 'Freshness',
+      value: `${offers.filter((offer) => offer.isActive).length}`,
+      icon: TrendingUp,
+      trend: 'Active listings',
+      trendDirection: 'up',
+      iconBg: 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+    },
+  ];
+};
+
 // ─── Component ──────────────────────────────────────────────
 export default function InfluencerDashboard() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  const [offers, setOffers] = useState([]);
+  const [loadingOffers, setLoadingOffers] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    let ignore = false;
+
+    const loadOffers = async () => {
+      setLoadingOffers(true);
+      setError(null);
+
+      try {
+        const response = await fetch(apiUrl('/api/offers'), {
+          headers: authHeaders(token),
+        });
+
+        const data = await parseApiResponse(response);
+        if (!data.success) {
+          throw new Error(data.message || 'Unable to load offers');
+        }
+
+        if (!ignore) {
+          setOffers(data.offers || []);
+        }
+      } catch (fetchError) {
+        if (!ignore) {
+          setError(fetchError.message);
+        }
+      } finally {
+        if (!ignore) {
+          setLoadingOffers(false);
+        }
+      }
+    };
+
+    loadOffers();
+
+    return () => {
+      ignore = true;
+    };
+  }, [token]);
+
+  const metrics = buildMetrics(offers);
 
   return (
     <DashboardLayout role="influencer" user={user} navItems={navItems}>
@@ -140,44 +134,46 @@ export default function InfluencerDashboard() {
         ))}
       </div>
 
-      {/* Nearby Venues */}
-      <section className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-purple-500" />
-            Nearby Venues
-          </h2>
-          <button className="text-sm font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors">
-            View all →
-          </button>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {nearbyVenues.map((venue) => (
-            <VenueCard
-              key={venue.name}
-              {...venue}
-              onViewDetails={() => {}}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* Publication Tasks */}
+      {/* Live Offers */}
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <Zap className="w-5 h-5 text-amber-500" />
-            Publication Tasks
+            <Sparkles className="w-5 h-5 text-purple-500" />
+            Live offers from merchants
           </h2>
-          <button className="text-sm font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors">
-            See all →
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
           </button>
         </div>
-        <div className="space-y-3">
-          {publicationTasks.map((task, i) => (
-            <PublicationTask key={i} {...task} />
-          ))}
-        </div>
+        {loadingOffers ? (
+          <div className="flex items-center justify-center py-12 text-slate-500 dark:text-slate-400 gap-2">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            Loading offers
+          </div>
+        ) : error ? (
+          <div className="rounded-2xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+            {error}
+          </div>
+        ) : offers.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+            No active offers yet. Check back after merchants publish new campaigns.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {offers.map((offer) => (
+              <OfferCard
+                key={offer._id}
+                offer={offer}
+                onView={() => {}}
+              />
+            ))}
+          </div>
+        )}
       </section>
     </DashboardLayout>
   );

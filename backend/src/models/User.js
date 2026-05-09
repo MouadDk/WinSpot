@@ -44,7 +44,4 @@ userSchema.pre('save', function (next) {
   next();
 });
 
-// Index for case-insensitive email search
-userSchema.index({ email: 1 }, { unique: true });
-
 export default mongoose.model('User', userSchema);

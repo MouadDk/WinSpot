@@ -50,6 +50,16 @@ const offerSchema = new mongoose.Schema({
     required: [true, 'WinCoins reward amount is required'],
     min: [1, 'WinCoins reward must be at least 1']
   },
+  totalWinCoinsBudget: {
+    type: Number,
+    required: [true, 'Total WinCoins budget is required'],
+    min: [1, 'Total WinCoins budget must be at least 1']
+  },
+  remainingWinCoinsBudget: {
+    type: Number,
+    required: [true, 'Remaining WinCoins budget is required'],
+    min: [0, 'Remaining WinCoins budget cannot be negative']
+  },
   isActive: {
     type: Boolean,
     default: true

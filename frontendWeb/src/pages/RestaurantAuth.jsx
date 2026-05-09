@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { UtensilsCrossed, Loader2, ArrowRight } from 'lucide-react';
 import AuthLayout from '../components/layout/AuthLayout';
 import { useAuth } from '../contexts/AuthContext';
+import { apiUrl } from '../lib/api';
 
 export default function RestaurantAuth({ isSignUp }) {
   const { login } = useAuth();
@@ -23,7 +24,7 @@ export default function RestaurantAuth({ isSignUp }) {
     try {
       if (isSignUp) {
         // Register API Call
-        const res = await fetch('http://localhost:4000/api/auth/register', {
+        const res = await fetch(apiUrl('/api/auth/register'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -39,7 +40,7 @@ export default function RestaurantAuth({ isSignUp }) {
         if (!data.success) throw new Error(data.message || 'Erreur lors de l\'inscription');
         
         // Auto-login after register
-        const loginRes = await fetch('http://localhost:4000/api/auth/login', {
+        const loginRes = await fetch(apiUrl('/api/auth/login'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),
@@ -50,7 +51,7 @@ export default function RestaurantAuth({ isSignUp }) {
         window.location.href = '/restaurant-dashboard';
       } else {
         // Login API Call
-        const res = await fetch('http://localhost:4000/api/auth/login', {
+        const res = await fetch(apiUrl('/api/auth/login'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),

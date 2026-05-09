@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Sparkles, Loader2, ArrowRight } from 'lucide-react';
 import AuthLayout from '../components/layout/AuthLayout';
 import { useAuth } from '../contexts/AuthContext';
+import { apiUrl } from '../lib/api';
 
 export default function InfluencerAuth({ isSignUp }) {
   const { login } = useAuth();
@@ -14,10 +15,10 @@ export default function InfluencerAuth({ isSignUp }) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
 
-  const GOOGLE_CLIENT_ID = '547459185528-nhb3isiepbm1tvhl4vdf5csvg3q311i5.apps.googleusercontent.com';
+  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   // Google Sign-In Handler
-  const handleGoogleResponse = async (response) => {
+  const handleGoogleResponse = useCallback(async (response) => {
     setLoading(true);
     setError(null);
 
@@ -25,7 +26,7 @@ export default function InfluencerAuth({ isSignUp }) {
       // Decode the JWT token
       const decodedToken = JSON.parse(atob(response.credential.split('.')[1]));
       
-      const res = await fetch('http://localhost:4000/api/auth/google', {
+      const res = await fetch(apiUrl('/api/auth/google'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -45,29 +46,31 @@ export default function InfluencerAuth({ isSignUp }) {
       setError(err.message);
       setLoading(false);
     }
-  };
+  }, [login]);
 
   useEffect(() => {
     // Initialize Google Sign-In
-    if (window.google) {
-      google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleGoogleResponse,
-      });
-      
-      google.accounts.id.renderButton(
-        document.getElementById('google-button'),
-        {
-          type: 'standard',
-          size: 'large',
-          width: '310',
-          theme: 'outline',
-          locale: 'fr',
-          text: isSignUp ? 'signup_with' : 'signin_with',
-        }
-      );
+    if (!GOOGLE_CLIENT_ID || !window.google?.accounts?.id) {
+      return;
     }
-  }, [isSignUp, handleGoogleResponse]);
+
+    window.google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleGoogleResponse,
+    });
+
+    window.google.accounts.id.renderButton(
+      document.getElementById('google-button'),
+      {
+        type: 'standard',
+        size: 'large',
+        width: '310',
+        theme: 'outline',
+        locale: 'fr',
+        text: isSignUp ? 'signup_with' : 'signin_with',
+      }
+    );
+  }, [GOOGLE_CLIENT_ID, isSignUp, handleGoogleResponse]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -77,7 +80,7 @@ export default function InfluencerAuth({ isSignUp }) {
     try {
       if (isSignUp) {
         // Register API Call
-        const res = await fetch('http://localhost:4000/api/auth/register', {
+        const res = await fetch(apiUrl('/api/auth/register'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -92,7 +95,7 @@ export default function InfluencerAuth({ isSignUp }) {
         if (!data.success) throw new Error(data.message || 'Erreur lors de l\'inscription');
         
         // Auto-login after register
-        const loginRes = await fetch('http://localhost:4000/api/auth/login', {
+        const loginRes = await fetch(apiUrl('/api/auth/login'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),
@@ -103,7 +106,7 @@ export default function InfluencerAuth({ isSignUp }) {
         window.location.href = '/influencer-dashboard';
       } else {
         // Login API Call
-        const res = await fetch('http://localhost:4000/api/auth/login', {
+        const res = await fetch(apiUrl('/api/auth/login'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),

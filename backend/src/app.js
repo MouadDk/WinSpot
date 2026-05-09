@@ -5,6 +5,8 @@ import healthRoute from './routes/health.js';
 import protectedRoutes from './routes/protected.js';
 import authRoutes from './routes/auth.js';
 import adminRoutes from './routes/admin.js';
+import offersRoutes from './routes/offers.js';
+import transactionsRoutes from './routes/transactions.js';
 import { logActivity } from './config/logger.js';
 
 export function createApp() {
@@ -30,7 +32,13 @@ export function createApp() {
   // 5. Admin Routes
   app.use('/api/admin', adminRoutes);
 
-  // 6. Error Handling
+  // 6. Offer Routes
+  app.use('/api/offers', offersRoutes);
+
+  // 7. Transaction Routes
+  app.use('/api/transactions', transactionsRoutes);
+
+  // 8. Error Handling
   app.use((err, req, res, next) => {
     const userId = req.auth?.userId;
     logActivity('error', {

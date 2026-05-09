@@ -3,6 +3,7 @@ import { requireAuthentication, requireRole } from '../middleware/auth.js';
 import { 
   createOffer, 
   getAllOffers, 
+  getMerchantOffers,
   getOfferById, 
   updateOffer, 
   deleteOffer 
@@ -12,6 +13,7 @@ const router = Router();
 
 // Routes for /api/offers
 router.get('/', requireAuthentication(), getAllOffers);
+router.get('/mine', requireRole('merchant'), getMerchantOffers);
 router.get('/:id', requireAuthentication(), getOfferById);
 
 // Merchant only routes
