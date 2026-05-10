@@ -1,0 +1,128 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light Theme (Default) */
+    --bg-main: #FFFFFF;
+    --bg-card: #F7F5FF;
+    --bg-card-alt: #FFFFFF;
+    --bg-surface: #F7F5FF;
+    --text-main: #0D0D0D;
+    --text-muted: #6B6B80;
+    --border-subtle: #E2D9F3;
+    --border-color: rgba(106, 31, 224, 0.12);
+    
+    /* Brand Colors */
+    --brand-primary: #6A1FE0;
+    --brand-secondary: #C9B1FF;
+    --brand-highlight: #7B2FFF;
+    --brand-accent: #7B2FFF;
+    --brand-gold: #F5A623;
+    --brand-gradient-start: #7B2FFF;
+    --brand-gradient-end: #C9B1FF;
+
+    /* Glassmorphism Light */
+    --glass-bg: rgba(123, 47, 255, 0.06);
+    --glass-border: rgba(106, 31, 224, 0.12);
+
+    --font-heading: 'Space Grotesk', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  .dark {
+    /* Dark Theme */
+    --bg-main: #080808;
+    --bg-card: #111111;
+    --bg-card-alt: #1A1A1A;
+    --bg-surface: #111111;
+    --text-main: #FFFFFF;
+    --text-muted: #9A9AB0;
+    --border-subtle: #2A2A3A;
+    --border-color: rgba(255, 255, 255, 0.08);
+    
+    /* Brand Colors */
+    --brand-primary: #7B2FFF;
+    --brand-secondary: #A66CFF;
+    --brand-highlight: #9D4EDD;
+    --brand-accent: #9D4EDD;
+    --brand-gold: #F5A623;
+    --brand-gradient-start: #7B2FFF;
+    --brand-gradient-end: #4A0FA3;
+
+    /* Glassmorphism Dark */
+    --glass-bg: rgba(123, 47, 255, 0.08);
+    --glass-border: rgba(166, 108, 255, 0.15);
+  }
+
+  body {
+    font-family: var(--font-body);
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-heading {
+    font-family: var(--font-heading);
+  }
+
+  .font-mono, .wincoin-value {
+    font-family: var(--font-mono);
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    background-color: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+  }
+
+  .glass-panel {
+    background: linear-gradient(135deg, rgba(123, 47, 255, 0.1), rgba(123, 47, 255, 0.02));
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--glass-border);
+  }
+
+  .glow-border {
+    box-shadow: 0 0 15px rgba(123, 47, 255, 0.15);
+  }
+  
+  .glow-text {
+    text-shadow: 0 0 10px rgba(123, 47, 255, 0.4);
+  }
+
+  .text-brand-gradient {
+    background: linear-gradient(to right, var(--brand-gradient-start), var(--brand-gradient-end));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .bg-brand-gradient {
+    background: linear-gradient(135deg, var(--brand-gradient-start), var(--brand-gradient-end));
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-primary);
+}
