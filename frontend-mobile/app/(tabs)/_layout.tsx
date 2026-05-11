@@ -23,14 +23,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   const colors = useColors();
   const isDark = useColorScheme() === "dark";
 
-  return (
-    <View style={styles.tabBarWrapper}>
-      <BlurView
-        intensity={80}
-        tint={isDark ? "dark" : "light"}
-        style={styles.tabBarContainer}
-      >
-        {state.routes.map((route: any, index: number) => {
+  const tabItems = state.routes.map((route: any, index: number) => {
           const { options } = descriptors[route.key];
           const label = options.tabBarLabel ?? options.title ?? route.name;
           const isFocused = state.index === index;
@@ -77,8 +70,28 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
               </Text>
             </Pressable>
           );
-        })}
-      </BlurView>
+  });
+
+  return (
+    <View style={styles.tabBarWrapper}>
+      {Platform.OS === "android" ? (
+        <View
+          style={[
+            styles.tabBarContainer,
+            { backgroundColor: isDark ? "rgba(0,0,0,0.36)" : "rgba(255,255,255,0.6)" },
+          ]}
+        >
+          {tabItems}
+        </View>
+      ) : (
+        <BlurView
+          intensity={80}
+          tint={isDark ? "dark" : "light"}
+          style={styles.tabBarContainer}
+        >
+          {tabItems}
+        </BlurView>
+      )}
     </View>
   );
 }

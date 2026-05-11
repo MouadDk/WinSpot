@@ -1,9 +1,9 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React, { useMemo } from "react";
 import {
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -138,7 +138,7 @@ export default function IndexScreen() {
                 },
               ]}
             >
-              <Image source={v.image} style={styles.featureImg} contentFit="cover" />
+              <Image source={{ uri: v.image }} style={styles.featureImg} resizeMode="cover" />
               <View style={styles.featureBody}>
                 <Text style={[styles.featureName, { color: colors.foreground }]} numberOfLines={1}>
                   {v.name}
@@ -225,7 +225,7 @@ export default function IndexScreen() {
                   },
                 ]}
               >
-                <Image source={v.image} style={styles.todayImg} contentFit="cover" />
+                <Image source={{ uri: v.image }} style={styles.todayImg} resizeMode="cover" />
                 <View style={styles.todayBody}>
                   <Text style={[styles.todayTitle, { color: colors.foreground }]} numberOfLines={1}>
                     {m.title}

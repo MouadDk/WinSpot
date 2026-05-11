@@ -1,8 +1,8 @@
 import { Feather } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import React from "react";
 import {
   Alert,
+  Image,
   Pressable,
   ScrollView,
   Text,
@@ -232,7 +232,7 @@ export default function ProfileScreen() {
                   },
                 ]}
               >
-                <Image source={v.image} style={styles.historyImg} contentFit="cover" />
+                <Image source={{ uri: v.image }} style={styles.historyImg} resizeMode="cover" />
                 <View style={{ flex: 1 }}>
                   <Text
                     style={[styles.historyVenue, { color: colors.foreground }]}
