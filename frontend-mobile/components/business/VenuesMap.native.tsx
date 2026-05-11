@@ -105,93 +105,6 @@ export function VenuesMap({
     mapRef.current?.animateToRegion(initialRegion, 600);
   };
 
-  if (Platform.OS === "android") {
-    return (
-      <View
-        style={[
-          styles.container,
-          styles.androidFallback,
-          {
-            backgroundColor: colors.card,
-            borderColor: colors.border,
-            borderRadius: colors.radius,
-          },
-        ]}
-      >
-        <Text style={[styles.androidTitle, { color: colors.foreground }]}>Lieux a la une</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.androidChips}
-        >
-          {venues.map((v) => (
-            <Pressable
-              key={v.id}
-              onPress={() => handleSelect(v)}
-              style={[
-                styles.androidChip,
-                {
-                  borderColor: v.id === activeId ? colors.primary : colors.border,
-                  backgroundColor: v.id === activeId ? colors.secondary : colors.card,
-                },
-              ]}
-            >
-              <Feather
-                name="map-pin"
-                size={12}
-                color={v.id === activeId ? colors.primary : colors.mutedForeground}
-              />
-              <Text
-                style={[
-                  styles.androidChipText,
-                  { color: v.id === activeId ? colors.primary : colors.foreground },
-                ]}
-              >
-                {v.name}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-
-        {activeVenue ? (
-          <View
-            style={[
-              styles.infoCard,
-              styles.androidInfoCard,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <View style={[styles.infoIcon, { backgroundColor: colors.secondary }]}>
-              <Feather name="map-pin" size={14} color={colors.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text
-                style={[styles.infoName, { color: colors.foreground }]}
-                numberOfLines={1}
-              >
-                {activeVenue.name}
-              </Text>
-              <Text
-                style={[styles.infoMeta, { color: colors.mutedForeground }]}
-                numberOfLines={1}
-              >
-                {activeVenue.type} - {activeVenue.distance}
-              </Text>
-            </View>
-            <View style={styles.infoRating}>
-              <Feather name="star" size={11} color={colors.gold} />
-              <Text style={[styles.infoRatingText, { color: colors.foreground }]}>
-                {activeVenue.rating.toFixed(1)}
-              </Text>
-            </View>
-          </View>
-        ) : null}
-      </View>
-    );
-  }
 
   return (
     <View
@@ -289,34 +202,6 @@ const styles = StyleSheet.create({
   map: {
     flex: 1,
   },
-  androidFallback: {
-    paddingTop: 12,
-    paddingBottom: 12,
-  },
-  androidTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 14,
-    paddingHorizontal: 12,
-    marginBottom: 10,
-  },
-  androidChips: {
-    paddingHorizontal: 12,
-    gap: 8,
-  },
-  androidChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  androidChipText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 12,
-    maxWidth: 140,
-  },
   recenter: {
     position: "absolute",
     top: 12,
@@ -347,13 +232,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
-  },
-  androidInfoCard: {
-    position: "relative",
-    bottom: 0,
-    left: 12,
-    right: 12,
-    marginTop: 12,
   },
   infoIcon: {
     width: 30,
