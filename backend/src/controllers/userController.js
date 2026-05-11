@@ -5,7 +5,7 @@ import { logActivity } from '../config/logger.js';
 export const getCurrentUserProfile = async (req, res) => {
   try {
     const userId = req.auth.userId;
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select('-password');
     
     if (!user) {
       logActivity('warn', { userId, action: 'user.getProfile', status: 'failed', message: 'User not found in database' });
@@ -23,13 +23,19 @@ export const getCurrentUserProfile = async (req, res) => {
 export const updateCurrentUserProfile = async (req, res) => {
   try {
     const userId = req.auth.userId;
-    const updates = req.body;
     
-    // Prevent sensitive fields from being updated directly via this route
-    delete updates.userId;
-    delete updates.role;
-    delete updates.email;
-    delete updates.password;
+    // Allowlist: only these fields can be updated via this route
+    const allowedFields = ['firstName', 'lastName', 'category'];
+    const updates = {};
+    for (const key of allowedFields) {
+      if (req.body[key] !== undefined) {
+        updates[key] = req.body[key];
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ success: false, message: 'No valid fields to update.' });
+    }
 
     const user = await User.findByIdAndUpdate(
       userId,

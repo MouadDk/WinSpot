@@ -1,18 +1,16 @@
 import { Router } from 'express';
 import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
-import { requireHardcodedAdmin } from '../middleware/adminAuth.js';
+import { adminLogin, requireAdminAuth } from '../middleware/adminAuth.js';
 import { adminTopUp } from '../controllers/transactionController.js';
 
 const router = Router();
 
-// Apply the hardcoded admin auth middleware to all /api/admin routes
-router.use(requireHardcodedAdmin);
+// Public: Admin Login — validates email + password, returns a JWT
+router.post('/login', adminLogin);
 
-// Admin Login Check - If the middleware passes, the login is successful
-router.post('/login', (req, res) => {
-  res.status(200).json({ success: true, message: 'Admin authenticated' });
-});
+// All routes below require a valid admin JWT
+router.use(requireAdminAuth);
 
 // Get all merchants
 router.get('/merchants', async (req, res) => {

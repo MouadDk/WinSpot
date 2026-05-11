@@ -3,7 +3,10 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { logActivity } from '../config/logger.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_key_pub2win_2026';
+if (!process.env.JWT_SECRET) {
+  throw new Error('FATAL: JWT_SECRET environment variable is not set. Server cannot start.');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export const register = async (req, res) => {
   try {
@@ -26,7 +29,7 @@ export const register = async (req, res) => {
       password: hashedPassword,
       firstName,
       lastName,
-      role: role || 'influencer',
+      role: ['merchant', 'influencer'].includes(role) ? role : 'influencer',
       category: role === 'merchant' ? category : null
     });
 

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import './index.css';
 
-const API_URL = 'http://localhost:4000/api';
+const API_URL = import.meta.env.VITE_BACKEND_URL
+  ? `${import.meta.env.VITE_BACKEND_URL.replace(/\/$/, '')}/api`
+  : 'http://localhost:4000/api';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -19,27 +21,35 @@ function App() {
   const [activeTab, setActiveTab] = useState('merchants');
 
   useEffect(() => {
-    const savedSecret = localStorage.getItem('adminSecret');
-    if (savedSecret) {
-      checkAuth(savedSecret);
+    const savedToken = localStorage.getItem('adminToken');
+    if (savedToken) {
+      // Verify token is still valid by fetching data
+      fetchData(savedToken).then(() => {
+        setIsAuthenticated(true);
+      }).catch(() => {
+        localStorage.removeItem('adminToken');
+        setIsAuthenticated(false);
+      });
     }
   }, []);
 
-  const checkAuth = async (secret) => {
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
     try {
       const res = await fetch(`${API_URL}/admin/login`, {
         method: 'POST',
-        headers: { 'x-admin-secret': secret }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
       });
-      if (res.ok) {
+      const data = await res.json();
+      if (res.ok && data.success) {
+        localStorage.setItem('adminToken', data.token);
         setIsAuthenticated(true);
         setError('');
-        localStorage.setItem('adminSecret', secret);
-        fetchData(secret);
+        fetchData(data.token);
       } else {
-        localStorage.removeItem('adminSecret');
-        setIsAuthenticated(false);
-        setError('Mot de passe incorrect ou backend inaccessible.');
+        setError(data.message || 'Identifiants incorrects.');
       }
     } catch (err) {
       console.error('Auth error', err);
@@ -47,30 +57,30 @@ function App() {
     }
   };
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (email !== 'mouad.wantedpubgm@gmail.com') {
-      setError('Email non autorisé');
-      return;
-    }
-    checkAuth(password);
-  };
-
   const handleLogout = () => {
-    localStorage.removeItem('adminSecret');
+    localStorage.removeItem('adminToken');
     setIsAuthenticated(false);
   };
 
-  const fetchData = async (secret) => {
+  const fetchData = async (token) => {
+    const authToken = token || localStorage.getItem('adminToken');
     setLoading(true);
     try {
-      const headers = { 'x-admin-secret': secret };
+      const headers = { 'Authorization': `Bearer ${authToken}` };
       const [merchRes, infRes, withRes, statsRes] = await Promise.all([
         fetch(`${API_URL}/admin/merchants`, { headers }),
         fetch(`${API_URL}/admin/influencers`, { headers }),
         fetch(`${API_URL}/admin/withdrawals/pending`, { headers }),
         fetch(`${API_URL}/admin/stats`, { headers })
       ]);
+      
+      // If any response is 401, token is expired
+      if ([merchRes, infRes, withRes, statsRes].some(r => r.status === 401)) {
+        localStorage.removeItem('adminToken');
+        setIsAuthenticated(false);
+        throw new Error('Session expired');
+      }
+      
       const merchData = await merchRes.json();
       const infData = await infRes.json();
       const withData = await withRes.json();
@@ -82,6 +92,7 @@ function App() {
       if (statsData.success) setCirculatingCoins(statsData.stats?.circulatingWinCoins ?? 0);
     } catch (err) {
       console.error('Failed to fetch data', err);
+      throw err;
     }
     setLoading(false);
   };
@@ -90,20 +101,20 @@ function App() {
     const amount = topUpAmount[merchantId];
     if (!amount || amount <= 0) return alert('Montant invalide');
 
-    const secret = localStorage.getItem('adminSecret');
+    const authToken = localStorage.getItem('adminToken');
     try {
       const res = await fetch(`${API_URL}/admin/topup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-secret': secret
+          'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({ merchantId, amount: Number(amount) })
       });
       const data = await res.json();
       if (data.success) {
         alert(`Succès! Nouveau solde: ${data.newBalance}`);
-        fetchData(secret);
+        fetchData();
         setTopUpAmount(prev => ({ ...prev, [merchantId]: '' }));
       } else {
         alert('Erreur: ' + data.message);
@@ -118,18 +129,18 @@ function App() {
       return;
     }
 
-    const secret = localStorage.getItem('adminSecret');
+    const authToken = localStorage.getItem('adminToken');
     try {
       const res = await fetch(`${API_URL}/admin/users/${userId}`, {
         method: 'DELETE',
         headers: {
-          'x-admin-secret': secret
+          'Authorization': `Bearer ${authToken}`
         }
       });
       const data = await res.json();
       if (data.success) {
         alert('Utilisateur supprimé avec succès.');
-        fetchData(secret);
+        fetchData();
       } else {
         alert('Erreur: ' + data.message);
       }
@@ -143,18 +154,18 @@ function App() {
       return;
     }
 
-    const secret = localStorage.getItem('adminSecret');
+    const authToken = localStorage.getItem('adminToken');
     try {
       const res = await fetch(`${API_URL}/admin/withdrawals/${transactionId}/${action}`, {
         method: 'POST',
         headers: {
-          'x-admin-secret': secret
+          'Authorization': `Bearer ${authToken}`
         }
       });
       const data = await res.json();
       if (data.success) {
         alert(`Retrait ${action === 'approve' ? 'approuvé' : 'rejeté'} avec succès.`);
-        fetchData(secret); // Refresh all data including balances
+        fetchData(); // Refresh all data including balances
       } else {
         alert('Erreur: ' + data.message);
       }

@@ -7,6 +7,8 @@ import authRoutes from './routes/auth.js';
 import adminRoutes from './routes/admin.js';
 import offersRoutes from './routes/offers.js';
 import transactionsRoutes from './routes/transactions.js';
+import usersRoutes from './routes/users.js';
+import missionsRoutes from './routes/missions.js';
 import { logActivity } from './config/logger.js';
 
 export function createApp() {
@@ -37,6 +39,12 @@ export function createApp() {
 
   // 7. Transaction Routes
   app.use('/api/transactions', transactionsRoutes);
+
+  // 8. User Routes
+  app.use('/api/users', usersRoutes);
+
+  // 9. Mission Routes
+  app.use('/api/missions', missionsRoutes);
 
   // 8. Error Handling
   app.use((err, req, res, next) => {

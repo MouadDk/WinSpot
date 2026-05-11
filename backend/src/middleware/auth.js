@@ -2,7 +2,10 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { logActivity } from '../config/logger.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_key_pub2win_2026';
+if (!process.env.JWT_SECRET) {
+  throw new Error('FATAL: JWT_SECRET environment variable is not set. Server cannot start.');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export const requireAuthentication = () => {
   return async (req, res, next) => {
