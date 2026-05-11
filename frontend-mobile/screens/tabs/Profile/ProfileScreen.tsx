@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React from "react";
 import {
   Alert,
@@ -11,7 +12,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/common/Avatar";
-import { ThemePicker } from "@/components/business/ThemePicker/ThemePicker";
 import { useAppData } from "@/context/AppDataContext";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
@@ -72,6 +72,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { user, balance, missions, completedMissionIds, venues } = useAppData();
   const { user: authUser, signOut } = useAuth();
+  const router = useRouter();
 
   const completedCount = completedMissionIds.length + user.missionsCompleted;
   const recent = venues.slice(0, 3);
@@ -112,7 +113,12 @@ export default function ProfileScreen() {
           <Text style={[styles.brand, { color: colors.foreground }]}>Profil</Text>
           <View style={styles.topRight}>
             <Pressable
-              style={[styles.iconBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => router.push("/settings")}
+              style={({ pressed }) => [
+                styles.iconBtn,
+                { backgroundColor: colors.card, borderColor: colors.border },
+                pressed && { opacity: 0.7 },
+              ]}
             >
               <Feather name="settings" size={18} color={colors.foreground} />
             </Pressable>
@@ -202,10 +208,7 @@ export default function ProfileScreen() {
           />
         </View>
 
-        {/* Theme picker */}
-        <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
-          <ThemePicker />
-        </View>
+
 
         {/* Mission history */}
         <View style={styles.historyHeader}>
