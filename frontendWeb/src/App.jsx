@@ -55,6 +55,16 @@ function App() {
         }
       />
 
+      {/* QR scan deep-link: merchant shares this URL; influencer scans it, lands here */}
+      <Route
+        path="/scan-qr"
+        element={
+          <RoleGuard allowedRole="influencer">
+            <InfluencerDashboard />
+          </RoleGuard>
+        }
+      />
+
       {/* Catch-all: Redirect unknown routes to home */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

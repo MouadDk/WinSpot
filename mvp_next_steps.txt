@@ -1,41 +1,338 @@
 ======================================================
-     PUB2WIN - MINIMUM VIABLE PRODUCT (MVP) PLAN
+     WINSPOT — MVP PROGRESS & NEXT STEPS
 ======================================================
 
-Maintenant que l'architecture Backend CRUD est en place, voici les étapes critiques pour finaliser le MVP (Minimum Viable Product) :
 
-1. SÉCURISATION DES TRANSACTIONS ET ÉCONOMIE
-------------------------------------------------------
-Logique implémentée : Le système fonctionne comme un portefeuille fermé. Personne ne crée des WinCoins à partir de rien.
-- Action 1 (Admin) : L'administrateur de la plateforme crédite (Top Up) le compte du Merchant via `/api/transactions/topup`.
-- Action 2 (Paiement) : Quand une mission ou offre est terminée, le Merchant paie l'Influenceur via `/api/transactions/pay`. Le backend déduit le solde du Merchant (-) et crédite l'Influenceur (+).
+══════════════════════════════════════════════════════
+  ✅ COMPLETED: QR CODE VISIT VERIFICATION SYSTEM
+══════════════════════════════════════════════════════
 
-2. UPLOAD D'IMAGES (FRONTEND & BACKEND)
-------------------------------------------------------
-Une plateforme de cashback sans visuels ne convertira pas.
-Action : Intégrer Cloudinary et Multer.
-- Backend : Créer une route `/api/upload` pour gérer les images des établissements et des offres.
-- Frontend : Ajouter un bouton d'upload dans le dashboard du merchant lorsqu'il crée une offre.
+  A full O2O (Online-to-Offline) verification loop
+  was implemented. Here is exactly how it works:
 
-3. VALIDATION DES DONNÉES (SÉCURITÉ BACKEND)
-------------------------------------------------------
-Si un merchant oublie un champ requis dans une offre, l'application peut crasher.
-Action : Installer `express-validator` ou `zod`.
-- Vérifier que les prix, les coordonnées géographiques et les textes sont valides avant de les enregistrer dans MongoDB.
+  ┌─────────────────────────────────────────────────┐
+  │  HOW THE QR VISIT FLOW WORKS (STEP BY STEP)    │
+  └─────────────────────────────────────────────────┘
 
-4. INTÉGRATION FRONTEND (RACCORDEMENT API)
-------------------------------------------------------
-Le frontend utilise actuellement des données statiques (mock data).
-Action : Remplacer les données factices par des appels API réels.
-- Fetcher `/api/offers` pour la carte/liste côté influenceur.
-- Fetcher `/api/missions` pour le dashboard.
-- Fetcher `/api/users/me` ou `/api/transactions/balance` pour afficher le solde WinCoins en haut à droite.
+  1. MERCHANT GENERATES QR CODE
+     - Merchant goes to their dashboard → "QR Visit
+       Verification" section.
+     - Selects one of their active offers from a
+       dropdown.
+     - Clicks "Generate QR Code".
+     - The backend creates a QRVisit document in
+       MongoDB with:
+         • A unique UUID token (one-time use)
+         • offerId, merchantId, label, winCoins
+         • expiresAt = now + 1 hour
+     - A QR code SVG is rendered on screen encoding
+       the URL: /scan-qr?token=<uuid>
+     - Merchant can also copy the raw token for
+       manual sharing.
 
-5. GÉOLOCALISATION DES OFFRES (OPTIONNEL MAIS RECOMMANDÉ)
-------------------------------------------------------
-Action : Activer la route `/api/offers/nearby`.
-- Utiliser l'index 2dsphere de MongoDB pour trier les offres en fonction de la position GPS du téléphone de l'influenceur.
+  2. INFLUENCER SCANS QR AT VENUE
+     - Option A (phone camera): Scans the QR → opens
+       the /scan-qr?token=... URL in their browser →
+       the token auto-fills in the input field.
+     - Option B (manual): Merchant gives/texts the
+       token → influencer pastes it in the "QR Visit
+       Check-In" panel on their dashboard.
+     - Influencer clicks "Verify".
 
-------------------------------------------------------
-ORDRE DE PRIORITÉ RECOMMANDÉ POUR LE PROCHAIN SPRINT :
-1 -> 4 -> 2 -> 3 -> 5
+  3. BACKEND VALIDATES & CREATES PENDING TRANSACTION
+     - Checks: token exists, not expired, not already
+       scanned, influencer ≠ merchant.
+     - Creates a Transaction document:
+         • userId = influencer's MongoDB _id
+         • type = "gain"
+         • amount = winCoins from the QR
+         • status = "pending"  ← KEY: not completed!
+         • description = "QR Visit verified @ <venue>"
+         • offerId = linked offer
+     - Updates the QRVisit document:
+         • scanned = true
+         • scannedBy = influencer's _id
+         • scannedAt = now
+         • transactionId = the new Transaction _id
+
+  4. BOTH SIDES SEE THE RESULT IMMEDIATELY
+
+     MERCHANT DASHBOARD ("Recent QR Activity" table):
+     ┌────────┬───────┬─────────────────┬─────────────┐
+     │ Offer  │ Coins │ Scanned by      │ Transaction │
+     ├────────┼───────┼─────────────────┼─────────────┤
+     │ Café X │ 🪙 1  │ ✅ John Doe     │ ⏳ pending  │
+     │        │       │    14:32        │             │
+     └────────┴───────┴─────────────────┴─────────────┘
+     - Shows influencer's first + last name
+     - Shows scan time
+     - Shows real transaction status from DB
+
+     INFLUENCER DASHBOARD ("My Visit History"):
+     - Shows venue name, scan timestamp, coin amount
+     - Shows "pending" badge
+     - Shows: "🤖 Pending transactions will be
+       verified and approved by AI automatically."
+
+  5. AI VERIFICATION (FUTURE — see Next Steps below)
+     - An AI service will review the pending
+       transaction, verify the visit evidence, and
+       flip status from "pending" → "completed".
+     - Only THEN will the WinCoins be credited to
+       the influencer's balance.
+
+  ┌─────────────────────────────────────────────────┐
+  │  FILES CREATED / MODIFIED                       │
+  └─────────────────────────────────────────────────┘
+
+  NEW FILES:
+  • backend/src/models/QRVisit.js
+      → Mongoose schema: token, merchantId, offerId,
+        label, winCoins, expiresAt, scanned,
+        scannedBy, scannedAt, transactionId
+
+  • backend/src/controllers/qrController.js
+      → 4 functions:
+        - generateQR     (merchant generates token)
+        - listMerchantQRs (merchant sees history +
+                           influencer names + tx status)
+        - scanQR          (influencer verifies presence)
+        - listInfluencerPendingQRs (influencer history)
+
+  • backend/src/routes/qr.js
+      → POST /api/qr/generate    (merchant only)
+      → GET  /api/qr/mine        (merchant only)
+      → POST /api/qr/scan        (authenticated)
+      → GET  /api/qr/pending      (authenticated)
+
+  • frontendWeb/src/components/qr/QRGenerator.jsx
+      → Merchant panel: offer picker, generate button,
+        live QR SVG, token copy, activity table
+
+  • frontendWeb/src/components/qr/QRScanner.jsx
+      → Influencer panel: token input (auto-fills
+        from URL), verify button, result card, visit
+        history with pending badge, AI note
+
+  MODIFIED FILES:
+  • backend/src/app.js
+      → Mounted /api/qr routes
+
+  • frontendWeb/src/App.jsx
+      → Added /scan-qr route (deep-link for QR scan)
+
+  • frontendWeb/src/pages/RestaurantDashboard.jsx
+      → Added QRGenerator section
+
+  • frontendWeb/src/pages/InfluencerDashboard.jsx
+      → Added QRScanner section
+
+  ┌─────────────────────────────────────────────────┐
+  │  SECURITY & CONSTRAINTS                         │
+  └─────────────────────────────────────────────────┘
+
+  • Each QR code is ONE-TIME USE only
+  • QR codes expire after 1 HOUR
+  • Merchant cannot scan their own QR code
+  • Transactions are created as "pending" — no
+    WinCoins are credited until AI approves
+  • All actions are logged via Winston (activity.log)
+
+  ┌─────────────────────────────────────────────────┐
+  │  NPM PACKAGES INSTALLED                         │
+  └─────────────────────────────────────────────────┘
+
+  Backend:
+  • uuid       → Generates unique QR tokens
+  • qrcode     → (available for server-side QR gen)
+
+  Frontend:
+  • qrcode.react  → Renders QR code SVG in React
+  • html5-qrcode  → (available for camera scanning)
+
+
+══════════════════════════════════════════════════════
+  ✅ PREVIOUSLY COMPLETED
+══════════════════════════════════════════════════════
+
+  1. TRANSACTION ECONOMY (CLOSED WALLET)
+     - Admin tops up merchant → /api/transactions/topup
+     - Merchant pays influencer → /api/transactions/pay
+     - Offer budget system: auto-deducts, auto-closes
+       when exhausted
+
+  2. FRONTEND API INTEGRATION
+     - Merchant dashboard: CRUD offers, real-time
+       budget tracking, metrics from live data
+     - Influencer dashboard: browse live offers,
+       metrics, refreshable
+
+  3. AUTHENTICATION & SECURITY
+     - Custom JWT auth (register/login/Google OAuth)
+     - Role-based guards (merchant/influencer/admin)
+     - Winston activity logging
+
+  4. ADMIN DASHBOARD
+     - User management, merchant top-ups, cashout
+       approval, KPI tracking
+
+  5. CASHOUT SYSTEM
+     - Influencer/merchant withdraw to PayPal or Bank
+     - Admin approves/rejects pending cashouts
+
+
+══════════════════════════════════════════════════════
+  🚀 NEXT STEPS — PRIORITY ORDER
+══════════════════════════════════════════════════════
+
+  ┌─────────────────────────────────────────────────┐
+  │ STEP 1: AI VERIFICATION SERVICE                 │
+  │ Priority: 🔴 CRITICAL                           │
+  └─────────────────────────────────────────────────┘
+
+  The core reason transactions are "pending" — we
+  need an AI to verify and approve them.
+
+  IDEAS:
+  a) Simple Rule-Based Verifier (MVP):
+     - Cron job or webhook that auto-approves all
+       pending QR transactions after a configurable
+       delay (e.g., 15 min). This is a placeholder
+       until real AI is ready.
+     - Admin can manually approve/reject from the
+       admin dashboard.
+
+  b) Image-Based Proof of Visit:
+     - Influencer uploads a photo/receipt at the
+       venue after scanning QR.
+     - AI (OpenAI Vision / Google Cloud Vision) 
+       checks if the photo matches the venue or
+       contains a valid receipt.
+
+  c) Social Post Verification:
+     - Influencer submits their Instagram/TikTok
+       post URL.
+     - AI scrapes the post metadata (location tag,
+       hashtags, @mention) to verify it matches the
+       merchant's offer.
+
+  d) Geofencing Verification:
+     - Compare influencer's GPS coordinates at scan
+       time vs. the offer's location coordinates.
+     - Auto-approve if within 200m radius.
+
+  IMPLEMENTATION:
+  - Create POST /api/qr/verify endpoint
+  - Add "completed" / "failed" status transitions
+  - Credit influencer balance on "completed"
+  - Deduct from offer budget on "completed"
+  - Notify both sides (WebSocket or polling)
+
+
+  ┌─────────────────────────────────────────────────┐
+  │ STEP 2: IMAGE UPLOAD SYSTEM                     │
+  │ Priority: 🟠 HIGH                               │
+  └─────────────────────────────────────────────────┘
+
+  Offers without images don't convert.
+
+  IDEAS:
+  - Cloudinary + Multer for image hosting
+  - Add offer thumbnail + gallery
+  - Influencer profile photo
+  - Receipt/proof upload for AI verification
+
+  FILES TO CREATE:
+  - backend/src/routes/upload.js
+  - backend/src/controllers/uploadController.js
+  - frontendWeb/src/components/ui/ImageUpload.jsx
+
+
+  ┌─────────────────────────────────────────────────┐
+  │ STEP 3: NOTIFICATIONS & REAL-TIME UPDATES       │
+  │ Priority: 🟠 HIGH                               │
+  └─────────────────────────────────────────────────┘
+
+  Both sides need to know when something happens.
+
+  IDEAS:
+  - WebSocket (Socket.io): Merchant gets notified
+    instantly when someone scans their QR.
+  - Push notifications (mobile via Expo Push).
+  - In-app notification bell with unread count.
+  - Email alerts for important events (cashout
+    approved, large transaction).
+
+
+  ┌─────────────────────────────────────────────────┐
+  │ STEP 4: PUBLICATION SUBMISSION FLOW              │
+  │ Priority: 🟡 MEDIUM                             │
+  └─────────────────────────────────────────────────┘
+
+  After visiting the venue, the influencer needs to
+  submit their publication (Instagram post/story).
+
+  IDEAS:
+  - Influencer submits post URL after QR check-in
+  - Backend stores the submission with status
+    (submitted → reviewing → approved → paid)
+  - AI verifies the post (see Step 1c)
+  - Merchant can also manually review submissions
+
+
+  ┌─────────────────────────────────────────────────┐
+  │ STEP 5: INPUT VALIDATION (express-validator/zod) │
+  │ Priority: 🟡 MEDIUM                             │
+  └─────────────────────────────────────────────────┘
+
+  - Validate all request bodies before processing
+  - Sanitize strings, check number ranges
+  - Return clear error messages
+
+
+  ┌─────────────────────────────────────────────────┐
+  │ STEP 6: GEOLOCATION & MAP VIEW                  │
+  │ Priority: 🟢 NICE TO HAVE                       │
+  └─────────────────────────────────────────────────┘
+
+  - Activate /api/offers/nearby with 2dsphere index
+  - Influencer sees offers on a map (Mapbox/Leaflet)
+  - Sort offers by distance from phone GPS
+  - Geofencing for QR scan validation (Step 1d)
+
+
+  ┌─────────────────────────────────────────────────┐
+  │ STEP 7: MOBILE APP INTEGRATION                  │
+  │ Priority: 🟢 NICE TO HAVE                       │
+  └─────────────────────────────────────────────────┘
+
+  - Connect frontend-mobile (Expo) to the same API
+  - Native QR camera scanner (use html5-qrcode or
+    expo-barcode-scanner)
+  - Push notifications via Expo Push Notifications
+  - Offline-first caching for offer browsing
+
+
+  ┌─────────────────────────────────────────────────┐
+  │ STEP 8: ANALYTICS & MERCHANT INSIGHTS           │
+  │ Priority: 🟢 NICE TO HAVE                       │
+  └─────────────────────────────────────────────────┘
+
+  IDEAS:
+  - QR scans per day/week chart
+  - Conversion rate: scans → publications → payouts
+  - Top influencers by venue visits
+  - Revenue tracking for the platform (fees)
+
+
+══════════════════════════════════════════════════════
+  RECOMMENDED SPRINT ORDER
+══════════════════════════════════════════════════════
+
+  Sprint 1: AI Verification (Step 1a — rule-based)
+  Sprint 2: Image Upload + Publication Flow
+  Sprint 3: Notifications
+  Sprint 4: Validation + Geolocation
+  Sprint 5: Mobile + Analytics
+
+======================================================

@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import MetricCard from '../components/dashboard/MetricCard';
 import OfferCard from '../components/dashboard/OfferCard';
+import QRScanner from '../components/qr/QRScanner';
 import { apiUrl, authHeaders, parseApiResponse } from '../lib/api';
 
 // ─── Navigation Items ───────────────────────────────────────
@@ -174,6 +175,11 @@ export default function InfluencerDashboard() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* QR Visit Check-In */}
+      <section className="mt-8 bg-white dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-700/50 shadow-sm p-6">
+        <QRScanner token={token} />
       </section>
     </DashboardLayout>
   );

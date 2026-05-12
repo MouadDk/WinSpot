@@ -9,6 +9,7 @@ import offersRoutes from './routes/offers.js';
 import transactionsRoutes from './routes/transactions.js';
 import usersRoutes from './routes/users.js';
 import missionsRoutes from './routes/missions.js';
+import qrRoutes from './routes/qr.js';
 import { logActivity } from './config/logger.js';
 
 export function createApp() {
@@ -45,6 +46,9 @@ export function createApp() {
 
   // 9. Mission Routes
   app.use('/api/missions', missionsRoutes);
+
+  // 10. QR Visit Routes
+  app.use('/api/qr', qrRoutes);
 
   // 8. Error Handling
   app.use((err, req, res, next) => {
