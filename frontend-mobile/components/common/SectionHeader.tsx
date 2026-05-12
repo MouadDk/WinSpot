@@ -4,15 +4,23 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
 
+interface SectionHeaderProps {
+  /** The title text of the section. */
+  title: string;
+  /** Optional label for an action button (e.g., "See All"). */
+  actionLabel?: string;
+  /** Callback for when the action button is pressed. */
+  onActionPress?: () => void;
+}
+
+/**
+ * A standard header component for sections with an optional action button.
+ */
 export function SectionHeader({
   title,
   actionLabel,
   onActionPress,
-}: {
-  title: string;
-  actionLabel?: string;
-  onActionPress?: () => void;
-}) {
+}: SectionHeaderProps) {
   const colors = useColors();
   return (
     <View style={styles.row}>

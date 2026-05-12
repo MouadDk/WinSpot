@@ -38,6 +38,12 @@ export function VenuesMap({
 
   const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik${markerParam}`;
 
+  const iframeStyle: React.CSSProperties = {
+    border: 0,
+    width: "100%",
+    height: "100%",
+  };
+
   return (
     <View
       style={[
@@ -52,9 +58,10 @@ export function VenuesMap({
       {/* OpenStreetMap iframe */}
       <iframe
         src={mapUrl}
-        style={{ border: 0, width: "100%", height: "100%" }}
+        style={iframeStyle}
         loading="lazy"
         title="Venues map"
+        frameBorder="0"
       />
 
       {/* Pin selector overlay */}

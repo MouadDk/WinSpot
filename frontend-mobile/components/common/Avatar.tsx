@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Text, View, ViewStyle } from "react-native";
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
 
@@ -13,17 +13,26 @@ const FONT_SIZES: Record<Size, number> = {
   xl: 30,
 };
 
+interface AvatarProps {
+  /** The initials to display when no image is available. */
+  initials: string;
+  /** Predefined size key for the avatar. */
+  size?: Size;
+  /** Optional ring/border color. */
+  ringColor?: string;
+  /** Optional additional styles. */
+  style?: StyleProp<ViewStyle>;
+}
+
+/**
+ * A circular avatar component that displays user initials.
+ */
 export function Avatar({
   initials,
   size = "md",
   ringColor,
   style,
-}: {
-  initials: string;
-  size?: Size;
-  ringColor?: string;
-  style?: ViewStyle;
-}) {
+}: AvatarProps) {
   const colors = useColors();
   const dim = SIZES[size];
   return (

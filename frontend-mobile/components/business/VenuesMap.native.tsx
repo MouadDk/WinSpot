@@ -46,25 +46,6 @@ const DARK_MAP_STYLE = [
   },
 ];
 
-function MapPin({ active, color }: { active: boolean; color: string }) {
-  return (
-    <View style={[styles.pinWrap, active && styles.pinWrapActive]}>
-      <View
-        style={[
-          styles.pin,
-          {
-            backgroundColor: color,
-            borderColor: "#FFFFFF",
-            transform: [{ scale: active ? 1.15 : 1 }],
-          },
-        ]}
-      >
-        <Feather name="map-pin" size={14} color="#FFFFFF" />
-      </View>
-    </View>
-  );
-}
-
 export function VenuesMap({
   venues,
   onSelectVenue,
@@ -123,6 +104,7 @@ export function VenuesMap({
     mapRef.current?.animateToRegion(initialRegion, 600);
   };
 
+
   return (
     <View
       style={[
@@ -152,11 +134,9 @@ export function VenuesMap({
             key={v.id}
             coordinate={{ latitude: v.latitude, longitude: v.longitude }}
             onPress={() => handleSelect(v)}
-            tracksViewChanges={false}
-            anchor={{ x: 0.5, y: 1 }}
-          >
-            <MapPin active={v.id === activeId} color={colors.primary} />
-          </Marker>
+            pinColor={v.id === activeId ? colors.primary : colors.mutedForeground}
+            title={v.name}
+          />
         ))}
       </MapView>
 
@@ -220,24 +200,6 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
-  },
-  pinWrap: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  pinWrapActive: {
-    shadowColor: "#000",
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  pin: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
   },
   recenter: {
     position: "absolute",

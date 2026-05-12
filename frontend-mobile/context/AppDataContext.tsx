@@ -68,6 +68,10 @@ function formatDateNow() {
   return `Aujourd'hui · ${hh}:${mm}`;
 }
 
+/**
+ * Provider component that manages the core application data state,
+ * including user missions, transactions, and balance.
+ */
 export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [state, setState] = useState<PersistedState>(DEFAULT_STATE);
@@ -209,6 +213,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
 }
 
+/**
+ * Custom hook to access application data, missions, and user balance.
+ * Must be used within an AppDataProvider.
+ */
 export function useAppData() {
   const ctx = useContext(AppDataContext);
   if (!ctx) throw new Error("useAppData must be used within AppDataProvider");

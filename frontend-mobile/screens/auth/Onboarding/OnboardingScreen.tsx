@@ -58,6 +58,12 @@ const SLIDES: Slide[] = [
   },
 ];
 
+/**
+ * OnboardingScreen
+ * 
+ * An interactive walkthrough for first-time users, highlighting the core
+ * value propositions (Discover, Collect, Redeem) with language support.
+ */
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();

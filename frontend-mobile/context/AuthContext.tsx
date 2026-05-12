@@ -54,6 +54,10 @@ function deriveInitials(first: string, last: string) {
   return ((first[0] ?? "") + (last[0] ?? "")).toUpperCase() || "U";
 }
 
+/**
+ * Provider component that handles user authentication state, onboarding progress,
+ * and language preferences with local persistence via AsyncStorage.
+ */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [state, setState] = useState<PersistedAuth>(DEFAULT_STATE);
@@ -170,6 +174,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+/**
+ * Custom hook to access authentication context.
+ * Must be used within an AuthProvider.
+ * 
+ * @throws Error if used outside of AuthProvider.
+ */
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");

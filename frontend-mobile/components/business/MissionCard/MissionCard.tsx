@@ -1,8 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { Image } from "expo-image";
 import React from "react";
-import { Platform, Pressable, Text, View } from "react-native";
+import { Image, Platform, Pressable, Text, View } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
 import type { Mission, Venue } from "@/data/types";
@@ -57,7 +56,7 @@ export function MissionCard({
       ]}
     >
       <View style={styles.row}>
-        <Image source={venue.image} style={styles.thumb} contentFit="cover" />
+        <Image source={{ uri: venue.image }} style={styles.thumb} resizeMode="cover" />
         <View style={styles.body}>
           <View style={styles.titleRow}>
             <Text
