@@ -19,11 +19,20 @@ export type AuthUser = {
   avatarInitials: string;
 };
 
+export type NotificationSettings = {
+  offers: boolean;
+  messages: boolean;
+  wallet: boolean;
+  security: boolean;
+  marketing: boolean;
+};
+
 type PersistedAuth = {
   hasSeenOnboarding: boolean;
   hasSelectedLanguage: boolean;
   language: "fr" | "en" | "ar";
   user: AuthUser | null;
+  notifications: NotificationSettings;
 };
 
 type AuthValue = {
@@ -33,21 +42,33 @@ type AuthValue = {
   hasSeenOnboarding: boolean;
   isAuthenticated: boolean;
   user: AuthUser | null;
+  notifications: NotificationSettings;
   setLanguage: (lang: "fr" | "en" | "ar") => void;
   confirmLanguage: () => void;
   completeOnboarding: () => void;
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, name?: string) => Promise<void>;
   signOut: () => void;
+  updateUser: (data: Partial<AuthUser>) => Promise<void>;
+  updateNotifications: (data: Partial<NotificationSettings>) => void;
 };
 
 const AuthContext = createContext<AuthValue | undefined>(undefined);
+
+const DEFAULT_NOTIFICATIONS: NotificationSettings = {
+  offers: true,
+  messages: true,
+  wallet: true,
+  security: true,
+  marketing: false,
+};
 
 const DEFAULT_STATE: PersistedAuth = {
   hasSeenOnboarding: false,
   hasSelectedLanguage: false,
   language: "fr",
   user: null,
+  notifications: DEFAULT_NOTIFICATIONS,
 };
 
 function deriveInitials(first: string, last: string) {
@@ -144,6 +165,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setState((prev) => ({ ...prev, user: null }));
   }, []);
 
+  const updateUser = useCallback(async (data: Partial<AuthUser>) => {
+    // In production, this would make an API call to the backend.
+    await new Promise((r) => setTimeout(r, 600));
+    setState((prev) => {
+      if (!prev.user) return prev;
+      const updatedUser = { ...prev.user, ...data };
+      // Refresh initials if name changed
+      if (data.firstName !== undefined || data.lastName !== undefined) {
+        updatedUser.avatarInitials = deriveInitials(
+          updatedUser.firstName,
+          updatedUser.lastName
+        );
+      }
+      return { ...prev, user: updatedUser };
+    });
+  }, []);
+
+  const updateNotifications = useCallback((data: Partial<NotificationSettings>) => {
+    setState((prev) => ({
+      ...prev,
+      notifications: { ...prev.notifications, ...data },
+    }));
+  }, []);
+
   const value = useMemo<AuthValue>(
     () => ({
       hydrated,
@@ -152,12 +197,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       hasSeenOnboarding: state.hasSeenOnboarding,
       isAuthenticated: state.user !== null,
       user: state.user,
+      notifications: state.notifications,
       setLanguage,
       confirmLanguage,
       completeOnboarding,
       signInWithGoogle,
       signInWithEmail,
       signOut,
+      updateUser,
+      updateNotifications,
     }),
     [
       hydrated,
@@ -168,6 +216,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signInWithGoogle,
       signInWithEmail,
       signOut,
+      updateUser,
+      updateNotifications,
     ],
   );
 
