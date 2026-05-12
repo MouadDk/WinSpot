@@ -13,6 +13,20 @@ const FONT_SIZES: Record<Size, number> = {
   xl: 30,
 };
 
+interface AvatarProps {
+  /** The initials to display when no image is available. */
+  initials: string;
+  /** Predefined size key for the avatar. */
+  size?: Size;
+  /** Optional ring/border color. */
+  ringColor?: string;
+  /** Optional additional styles. */
+  style?: ViewStyle;
+}
+
+/**
+ * A circular avatar component that displays user initials.
+ */
 export function Avatar({
   initials,
   size = "md",

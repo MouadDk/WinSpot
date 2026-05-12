@@ -22,6 +22,10 @@ type ThemeValue = {
 
 const ThemeContext = createContext<ThemeValue | undefined>(undefined);
 
+/**
+ * Provider component for managing application theme preferences.
+ * Supports light, dark, and system-default themes with persistent storage.
+ */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const systemScheme = useColorScheme();
   const [preference, setPreferenceState] = useState<ThemePreference>("system");
@@ -59,6 +63,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
+/**
+ * Custom hook to access theme constants and update preferences.
+ * Must be used within a ThemeProvider.
+ */
 export function useTheme() {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error("useTheme must be used within ThemeProvider");

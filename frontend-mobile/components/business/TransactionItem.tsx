@@ -13,6 +13,10 @@ const ICONS: Record<Transaction["kind"], keyof typeof Feather.glyphMap> = {
   spend: "send",
 };
 
+/**
+ * Renders an individual transaction row with icons and tinted backgrounds
+ * based on the transaction type.
+ */
 export function TransactionItem({ tx }: { tx: Transaction }) {
   const colors = useColors();
   const positive = tx.amount >= 0;

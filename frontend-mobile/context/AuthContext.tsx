@@ -43,6 +43,10 @@ type AuthValue = {
 
 const AuthContext = createContext<AuthValue | undefined>(undefined);
 
+/**
+ * Provider component that handles user authentication state, onboarding progress,
+ * and language preferences with local persistence via AsyncStorage.
+ */
 const DEFAULT_STATE: PersistedAuth = {
   hasSeenOnboarding: false,
   hasSelectedLanguage: false,
@@ -170,6 +174,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+/**
+ * Custom hook to access authentication context.
+ * Must be used within an AuthProvider.
+ * 
+ * @throws Error if used outside of AuthProvider.
+ */
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");

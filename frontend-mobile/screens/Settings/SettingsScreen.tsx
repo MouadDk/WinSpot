@@ -64,6 +64,12 @@ function SettingsRow({
   );
 }
 
+/**
+ * SettingsScreen
+ * 
+ * Provides dynamic control over user preferences including theme selection,
+ * notification settings, and account management.
+ */
 export default function SettingsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();

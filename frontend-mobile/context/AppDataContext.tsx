@@ -47,6 +47,10 @@ type AppDataValue = {
 
 const AppDataContext = createContext<AppDataValue | undefined>(undefined);
 
+/**
+ * Provider component that manages the core application data state,
+ * including user missions, transactions, and balance.
+ */
 const DEFAULT_STATE: PersistedState = {
   balance: 86,
   acceptedMissionIds: [],
@@ -209,6 +213,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
 }
 
+/**
+ * Custom hook to access application data, missions, and user balance.
+ * Must be used within an AppDataProvider.
+ */
 export function useAppData() {
   const ctx = useContext(AppDataContext);
   if (!ctx) throw new Error("useAppData must be used within AppDataProvider");
