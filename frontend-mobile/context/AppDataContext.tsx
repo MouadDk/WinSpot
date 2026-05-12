@@ -47,10 +47,6 @@ type AppDataValue = {
 
 const AppDataContext = createContext<AppDataValue | undefined>(undefined);
 
-/**
- * Provider component that manages the core application data state,
- * including user missions, transactions, and balance.
- */
 const DEFAULT_STATE: PersistedState = {
   balance: 86,
   acceptedMissionIds: [],
@@ -72,6 +68,10 @@ function formatDateNow() {
   return `Aujourd'hui · ${hh}:${mm}`;
 }
 
+/**
+ * Provider component that manages the core application data state,
+ * including user missions, transactions, and balance.
+ */
 export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [state, setState] = useState<PersistedState>(DEFAULT_STATE);

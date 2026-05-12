@@ -43,10 +43,6 @@ type AuthValue = {
 
 const AuthContext = createContext<AuthValue | undefined>(undefined);
 
-/**
- * Provider component that handles user authentication state, onboarding progress,
- * and language preferences with local persistence via AsyncStorage.
- */
 const DEFAULT_STATE: PersistedAuth = {
   hasSeenOnboarding: false,
   hasSelectedLanguage: false,
@@ -58,6 +54,10 @@ function deriveInitials(first: string, last: string) {
   return ((first[0] ?? "") + (last[0] ?? "")).toUpperCase() || "U";
 }
 
+/**
+ * Provider component that handles user authentication state, onboarding progress,
+ * and language preferences with local persistence via AsyncStorage.
+ */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [state, setState] = useState<PersistedAuth>(DEFAULT_STATE);

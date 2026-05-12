@@ -114,6 +114,8 @@ export default function ProfileScreen() {
           <View style={styles.topRight}>
             <Pressable
               onPress={() => router.push("/settings")}
+              accessibilityRole="button"
+              accessibilityLabel="Ouvrir les paramètres"
               style={({ pressed }) => [
                 styles.iconBtn,
                 { backgroundColor: colors.card, borderColor: colors.border },

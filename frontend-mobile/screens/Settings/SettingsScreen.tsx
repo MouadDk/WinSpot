@@ -5,6 +5,7 @@ import { Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemePicker } from "@/components/business/ThemePicker/ThemePicker";
+import { APP_CONFIG } from "@/constants/AppData";
 import { useColors } from "@/hooks/useColors";
 import { styles } from "./SettingsScreen.styles";
 
@@ -151,7 +152,7 @@ export default function SettingsScreen() {
 
         <View style={{ alignItems: "center", marginTop: 20, marginBottom: 40 }}>
           <Text style={{ fontFamily: "Inter_500Medium", fontSize: 13, color: colors.mutedForeground }}>
-            WinSpot v1.0.0
+            Pub2Win v{APP_CONFIG.version}
           </Text>
         </View>
       </ScrollView>
