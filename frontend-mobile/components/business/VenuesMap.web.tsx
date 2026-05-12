@@ -52,9 +52,10 @@ export function VenuesMap({
       {/* OpenStreetMap iframe */}
       <iframe
         src={mapUrl}
-        style={{ border: 0, width: "100%", height: "100%" }}
+        style={styles.iframe}
         loading="lazy"
         title="Venues map"
+        frameBorder="0"
       />
 
       {/* Pin selector overlay */}
@@ -144,6 +145,10 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     position: "relative",
   },
+  iframe: {
+    width: "100%",
+    height: "100%",
+  } as any,
   pinList: {
     position: "absolute",
     top: 12,

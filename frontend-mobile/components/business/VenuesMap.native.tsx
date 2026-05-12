@@ -4,7 +4,6 @@ import React, { useMemo, useRef, useState } from "react";
 import {
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
