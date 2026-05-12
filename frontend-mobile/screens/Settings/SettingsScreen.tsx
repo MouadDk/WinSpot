@@ -32,10 +32,12 @@ function SettingsRow({
   onToggle,
 }: SettingsRowProps) {
   const colors = useColors();
+  const isActionableLink = type === "link" && typeof onPress === "function";
 
   return (
     <Pressable
-      onPress={type === "link" ? onPress : undefined}
+      onPress={isActionableLink ? onPress : undefined}
+      disabled={type === "link" && !isActionableLink}
       style={[styles.row, !isLast && styles.rowBorder, { borderBottomColor: colors.border }]}
     >
       <View style={[styles.rowIconContainer, { backgroundColor: colors.secondary }]}>
@@ -50,7 +52,9 @@ function SettingsRow({
       {type === "link" ? (
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           {value ? <Text style={[styles.rowValue, { color: colors.mutedForeground }]}>{value}</Text> : null}
-          <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+          {isActionableLink ? (
+            <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+          ) : null}
         </View>
       ) : (
         <Switch

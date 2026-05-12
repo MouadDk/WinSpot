@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Text, View, ViewStyle } from "react-native";
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
 
@@ -21,7 +21,7 @@ interface AvatarProps {
   /** Optional ring/border color. */
   ringColor?: string;
   /** Optional additional styles. */
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -32,12 +32,7 @@ export function Avatar({
   size = "md",
   ringColor,
   style,
-}: {
-  initials: string;
-  size?: Size;
-  ringColor?: string;
-  style?: ViewStyle;
-}) {
+}: AvatarProps) {
   const colors = useColors();
   const dim = SIZES[size];
   return (
