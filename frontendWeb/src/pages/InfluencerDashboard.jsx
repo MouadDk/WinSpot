@@ -7,14 +7,7 @@ import OfferCard from '../components/dashboard/OfferCard';
 import QRScanner from '../components/qr/QRScanner';
 import { apiUrl, authHeaders, parseApiResponse } from '../lib/api';
 
-// ─── Navigation Items ───────────────────────────────────────
-const navItems = [
-  { label: 'Overview', icon: LayoutDashboard, href: '/influencer-dashboard', active: true },
-  { label: 'Offers', icon: MapPin, href: '#' },
-  { label: 'My Publications', icon: FileText, href: '#' },
-  { label: 'Wallet', icon: Wallet, href: '#' },
-  { label: 'Settings', icon: Settings, href: '#' },
-];
+import WalletTab from '../components/dashboard/WalletTab';
 
 const buildMetrics = (offers) => {
   const activeOffers = offers.filter((offer) => offer.isActive);
@@ -68,9 +61,18 @@ const buildMetrics = (offers) => {
 // ─── Component ──────────────────────────────────────────────
 export default function InfluencerDashboard() {
   const { user, token } = useAuth();
+  const [activeTab, setActiveTab] = useState('overview');
   const [offers, setOffers] = useState([]);
   const [loadingOffers, setLoadingOffers] = useState(false);
   const [error, setError] = useState(null);
+
+  const navItems = [
+    { label: 'Overview', icon: LayoutDashboard, href: '#', active: activeTab === 'overview', onClick: () => setActiveTab('overview') },
+    { label: 'Offers', icon: MapPin, href: '#' },
+    { label: 'My Publications', icon: FileText, href: '#' },
+    { label: 'Wallet', icon: Wallet, href: '#', active: activeTab === 'wallet', onClick: () => setActiveTab('wallet') },
+    { label: 'Settings', icon: Settings, href: '#' },
+  ];
 
   useEffect(() => {
     if (!token) {
@@ -118,69 +120,77 @@ export default function InfluencerDashboard() {
 
   return (
     <DashboardLayout role="influencer" user={user} navItems={navItems}>
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">
-          Overview
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
-          Discover venues, complete publications, and earn WinCoins.
-        </p>
-      </div>
+      {activeTab === 'overview' && (
+        <>
+          {/* Page Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">
+              Overview
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">
+              Discover venues, complete publications, and earn WinCoins.
+            </p>
+          </div>
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {metrics.map((m) => (
-          <MetricCard key={m.title} {...m} />
-        ))}
-      </div>
-
-      {/* Live Offers */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-500" />
-            Live offers from merchants
-          </h2>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Refresh
-          </button>
-        </div>
-        {loadingOffers ? (
-          <div className="flex items-center justify-center py-12 text-slate-500 dark:text-slate-400 gap-2">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            Loading offers
-          </div>
-        ) : error ? (
-          <div className="rounded-2xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300">
-            {error}
-          </div>
-        ) : offers.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 px-6 py-12 text-center text-slate-500 dark:text-slate-400">
-            No active offers yet. Check back after merchants publish new campaigns.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {offers.map((offer) => (
-              <OfferCard
-                key={offer._id}
-                offer={offer}
-                onView={() => {}}
-              />
+          {/* Metrics Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            {metrics.map((m) => (
+              <MetricCard key={m.title} {...m} />
             ))}
           </div>
-        )}
-      </section>
 
-      {/* QR Visit Check-In */}
-      <section className="mt-8 bg-white dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-700/50 shadow-sm p-6">
-        <QRScanner token={token} />
-      </section>
+          {/* Live Offers */}
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-500" />
+                Live offers from merchants
+              </h2>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="inline-flex items-center gap-2 text-sm font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Refresh
+              </button>
+            </div>
+            {loadingOffers ? (
+              <div className="flex items-center justify-center py-12 text-slate-500 dark:text-slate-400 gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Loading offers
+              </div>
+            ) : error ? (
+              <div className="rounded-2xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+                {error}
+              </div>
+            ) : offers.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                No active offers yet. Check back after merchants publish new campaigns.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {offers.map((offer) => (
+                  <OfferCard
+                    key={offer._id}
+                    offer={offer}
+                    onView={() => {}}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* QR Visit Check-In */}
+          <section className="mt-8 bg-white dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-700/50 shadow-sm p-6">
+            <QRScanner token={token} />
+          </section>
+        </>
+      )}
+
+      {activeTab === 'wallet' && (
+        <WalletTab token={token} />
+      )}
     </DashboardLayout>
   );
 }

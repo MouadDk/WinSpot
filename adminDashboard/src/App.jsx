@@ -15,6 +15,7 @@ function App() {
   const [merchants, setMerchants] = useState([]);
   const [influencers, setInfluencers] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
+  const [finetuneItems, setFinetuneItems] = useState([]);
   const [circulatingCoins, setCirculatingCoins] = useState(0);
   const [loading, setLoading] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState({});
@@ -67,15 +68,16 @@ function App() {
     setLoading(true);
     try {
       const headers = { 'Authorization': `Bearer ${authToken}` };
-      const [merchRes, infRes, withRes, statsRes] = await Promise.all([
+      const [merchRes, infRes, withRes, statsRes, fineRes] = await Promise.all([
         fetch(`${API_URL}/admin/merchants`, { headers }),
         fetch(`${API_URL}/admin/influencers`, { headers }),
         fetch(`${API_URL}/admin/withdrawals/pending`, { headers }),
-        fetch(`${API_URL}/admin/stats`, { headers })
+        fetch(`${API_URL}/admin/stats`, { headers }),
+        fetch(`${API_URL}/admin/finetune`, { headers })
       ]);
       
       // If any response is 401, token is expired
-      if ([merchRes, infRes, withRes, statsRes].some(r => r.status === 401)) {
+      if ([merchRes, infRes, withRes, statsRes, fineRes].some(r => r.status === 401)) {
         localStorage.removeItem('adminToken');
         setIsAuthenticated(false);
         throw new Error('Session expired');
@@ -85,11 +87,13 @@ function App() {
       const infData = await infRes.json();
       const withData = await withRes.json();
       const statsData = await statsRes.json();
+      const fineData = await fineRes.json();
       
       if (merchData.success) setMerchants(merchData.merchants);
       if (infData.success) setInfluencers(infData.influencers);
       if (withData.success) setWithdrawals(withData.transactions);
       if (statsData.success) setCirculatingCoins(statsData.stats?.circulatingWinCoins ?? 0);
+      if (fineData.success) setFinetuneItems(fineData.items);
     } catch (err) {
       console.error('Failed to fetch data', err);
       throw err;
@@ -174,6 +178,31 @@ function App() {
     }
   };
 
+  const handleFinetuneAction = async (itemId, action) => {
+    if (!window.confirm(`Êtes-vous sûr de vouloir ${action === 'approve' ? 'APPROUVER' : 'REJETER'} cette analyse IA ?`)) {
+      return;
+    }
+
+    const authToken = localStorage.getItem('adminToken');
+    try {
+      const res = await fetch(`${API_URL}/admin/finetune/${itemId}/${action}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Action enregistrée avec succès.');
+        fetchData();
+      } else {
+        alert('Erreur: ' + data.message);
+      }
+    } catch (err) {
+      alert('Erreur réseau');
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', width: '100%' }}>
@@ -238,6 +267,18 @@ function App() {
           )}
         </div>
 
+        <div 
+          className={`nav-item ${activeTab === 'finetune' ? 'active' : ''}`}
+          onClick={() => setActiveTab('finetune')}
+        >
+          <span style={{ marginRight: '10px' }}>🤖</span> AI Review
+          {finetuneItems.filter(i => i.adminStatus === 'pending').length > 0 && (
+            <span style={{ marginLeft: 'auto', background: '#eab308', color: 'black', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+              {finetuneItems.filter(i => i.adminStatus === 'pending').length}
+            </span>
+          )}
+        </div>
+
         <div style={{ marginTop: 'auto' }}>
           <button className="btn btn-sm btn-danger" style={{ width: '100%' }} onClick={handleLogout}>
             Déconnexion
@@ -254,6 +295,7 @@ function App() {
               {activeTab === 'merchants' && 'Gestion des Merchants'}
               {activeTab === 'influencers' && 'Gestion des Influencers'}
               {activeTab === 'cashouts' && 'Demandes de Retrait'}
+              {activeTab === 'finetune' && 'Validation des Analyses IA'}
             </h1>
             <p>Gérez les comptes et les fonds en temps réel</p>
           </div>
@@ -448,8 +490,101 @@ function App() {
                     ))}
                     {withdrawals.length === 0 && (
                       <tr>
-                        <td colSpan="4" style={{ textAlign: 'center', color: '#64748b', padding: '3rem' }}>
+                        <td colSpan="5" style={{ textAlign: 'center', color: '#64748b', padding: '3rem' }}>
                           🎉 Aucune demande de retrait en attente.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              )}
+
+              {activeTab === 'finetune' && (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Image</th>
+                      <th>Analyse IA (JSON)</th>
+                      <th>Infos Transaction</th>
+                      <th>Statut</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {finetuneItems.map(item => {
+                      const aiDataStr = item.conversations?.find(c => c.from === 'gpt')?.value || '{}';
+                      let aiData = {};
+                      try { aiData = JSON.parse(aiDataStr); } catch(e) {}
+                      
+                      const imageUrl = item.imageUrl.startsWith('/uploads') 
+                        ? `${API_URL.replace('/api', '')}${item.imageUrl}` 
+                        : item.imageUrl;
+
+                      return (
+                        <tr key={item._id}>
+                          <td>
+                            <a href={imageUrl} target="_blank" rel="noreferrer">
+                              <img 
+                                src={imageUrl} 
+                                alt="AI Review" 
+                                style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #334155' }} 
+                              />
+                            </a>
+                          </td>
+                          <td style={{ maxWidth: '300px' }}>
+                            <div style={{ fontSize: '0.8rem', color: '#cbd5e1', background: '#1e293b', padding: '8px', borderRadius: '6px', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                              {JSON.stringify(aiData, null, 2)}
+                            </div>
+                          </td>
+                          <td>
+                            {item.transactionId ? (
+                              <>
+                                <div style={{ color: '#fff', fontWeight: 'bold' }}>{item.transactionId.userId?.firstName} {item.transactionId.userId?.lastName}</div>
+                                <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>{item.transactionId.userId?.email}</div>
+                                <div style={{ color: '#f59e0b', fontWeight: 'bold', marginTop: '4px' }}>🪙 {item.transactionId.amount}</div>
+                                <div style={{ fontSize: '0.75rem', marginTop: '2px', color: item.transactionId.status === 'completed' ? '#34d399' : item.transactionId.status === 'failed' ? '#ef4444' : '#eab308' }}>
+                                  Tx: {item.transactionId.status.toUpperCase()}
+                                </div>
+                              </>
+                            ) : (
+                              <div style={{ color: '#64748b', fontSize: '0.8rem' }}>Aucune transaction liée</div>
+                            )}
+                          </td>
+                          <td>
+                            <span style={{ 
+                              padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase',
+                              background: item.adminStatus === 'approved' ? 'rgba(16, 185, 129, 0.15)' : item.adminStatus === 'denied' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(234, 179, 8, 0.15)',
+                              color: item.adminStatus === 'approved' ? '#34d399' : item.adminStatus === 'denied' ? '#ef4444' : '#f59e0b'
+                            }}>
+                              {item.adminStatus}
+                            </span>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                              <button 
+                                className="btn btn-sm" 
+                                style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', boxShadow: 'none' }}
+                                onClick={() => handleFinetuneAction(item._id, 'approve')}
+                                disabled={item.adminStatus === 'approved'}
+                              >
+                                ✅ Approuver (Forcer)
+                              </button>
+                              <button 
+                                className="btn btn-sm btn-danger" 
+                                onClick={() => handleFinetuneAction(item._id, 'deny')}
+                                disabled={item.adminStatus === 'denied'}
+                              >
+                                ❌ Rejeter (Forcer)
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {finetuneItems.length === 0 && (
+                      <tr>
+                        <td colSpan="5" style={{ textAlign: 'center', color: '#64748b', padding: '3rem' }}>
+                          Aucune donnée IA à valider.
                         </td>
                       </tr>
                     )}

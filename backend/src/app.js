@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 
 import healthRoute from './routes/health.js';
 import protectedRoutes from './routes/protected.js';
@@ -10,6 +11,7 @@ import transactionsRoutes from './routes/transactions.js';
 import usersRoutes from './routes/users.js';
 import missionsRoutes from './routes/missions.js';
 import qrRoutes from './routes/qr.js';
+import aiRoutes from './routes/aiRoutes.js'; // <-- 1. ADD THIS IMPORT
 import { logActivity } from './config/logger.js';
 
 export function createApp() {
@@ -50,7 +52,13 @@ export function createApp() {
   // 10. QR Visit Routes
   app.use('/api/qr', qrRoutes);
 
-  // 8. Error Handling
+  // 11. AI Analysis Routes <-- 2. ADD THIS MOUNT POINT
+  app.use('/api/ai', aiRoutes);
+
+  // Serve uploads folder so admin can view uploaded AI images
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
+  // 12. Error Handling (Updated comment number)
   app.use((err, req, res, next) => {
     const userId = req.auth?.userId;
     logActivity('error', {

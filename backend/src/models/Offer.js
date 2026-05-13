@@ -1,10 +1,9 @@
 import mongoose from 'mongoose';
 
 const offerSchema = new mongoose.Schema({
-  // Clerk ID of the merchant who created this offer
   merchantId: {
     type: String,
-    required: [true, 'merchantId (Clerk ID) is required'],
+    required: [true, 'ID) is required'],
     index: true
   },
   establishmentName: {

@@ -40,7 +40,7 @@ const transactionSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'completed', 'failed'],
+    enum: ['pending', 'in_review', 'completed', 'failed'],
     default: 'completed'
   },
   // Added for cashouts: 'paypal' or 'bank'

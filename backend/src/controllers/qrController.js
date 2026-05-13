@@ -203,6 +203,7 @@ export async function listInfluencerPendingQRs(req, res) {
       scanned: true,
     })
       .populate('offerId', 'establishmentName')
+      .populate('transactionId', 'status amount')
       .sort({ scannedAt: -1 })
       .limit(50)
       .lean();

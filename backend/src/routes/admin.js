@@ -132,4 +132,81 @@ router.post('/withdrawals/:id/reject', async (req, res) => {
   }
 });
 
+// --- AI FINETUNE MANAGEMENT ---
+
+import FineTuneData from '../models/FineTuneData.js';
+
+// Get all AI predictions for review
+router.get('/finetune', async (req, res) => {
+  try {
+    const items = await FineTuneData.find()
+      .populate({
+        path: 'transactionId',
+        select: 'status amount userId',
+        populate: { path: 'userId', select: 'firstName lastName email' }
+      })
+      .sort({ createdAt: -1 });
+    res.json({ success: true, items });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Admin overrides AI decision to APPROVE
+router.post('/finetune/:id/approve', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const item = await FineTuneData.findById(id).populate('transactionId');
+    if (!item) return res.status(404).json({ success: false, message: 'Item not found' });
+
+    item.adminStatus = 'approved';
+    await item.save();
+
+    const tx = item.transactionId;
+    if (tx && tx.status !== 'completed') {
+      tx.status = 'completed';
+      await tx.save();
+
+      // Add coins to user if it was failed or pending
+      await User.findByIdAndUpdate(tx.userId, {
+        $inc: { winCoinsBalance: tx.amount }
+      });
+    }
+
+    res.json({ success: true, message: 'AI decision overridden: Approved' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Admin overrides AI decision to DENY
+router.post('/finetune/:id/deny', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const item = await FineTuneData.findById(id).populate('transactionId');
+    if (!item) return res.status(404).json({ success: false, message: 'Item not found' });
+
+    item.adminStatus = 'denied';
+    await item.save();
+
+    const tx = item.transactionId;
+    if (tx && tx.status === 'completed') {
+      tx.status = 'failed';
+      await tx.save();
+
+      // Deduct coins from user because it was previously approved
+      await User.findByIdAndUpdate(tx.userId, {
+        $inc: { winCoinsBalance: -tx.amount }
+      });
+    } else if (tx && (tx.status === 'pending' || tx.status === 'in_review')) {
+      tx.status = 'failed';
+      await tx.save();
+    }
+
+    res.json({ success: true, message: 'AI decision overridden: Denied' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 export default router;

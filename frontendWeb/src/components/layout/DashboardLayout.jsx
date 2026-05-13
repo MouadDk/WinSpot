@@ -90,7 +90,13 @@ export default function DashboardLayout({
               <Link
                 key={item.label}
                 to={item.href || '#'}
-                onClick={() => setSidebarOpen(false)}
+                onClick={(e) => {
+                  if (item.onClick) {
+                    e.preventDefault();
+                    item.onClick();
+                  }
+                  setSidebarOpen(false);
+                }}
                 className={`
                   flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
                   transition-all duration-200 relative
