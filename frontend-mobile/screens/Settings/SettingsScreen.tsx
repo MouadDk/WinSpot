@@ -104,17 +104,17 @@ export default function SettingsScreen() {
         {/* Account Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>Compte</Text>
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
-            <SettingsRow icon="user" label="Modifier le profil" />
-            <SettingsRow icon="lock" label="Mot de passe & Sécurité" />
-            <SettingsRow icon="credit-card" label="Moyens de paiement" isLast />
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: 12 }]}>
+            <SettingsRow icon="user" label="Modifier le profil" onPress={() => router.push("/settings-pages/profile-edit")} />
+            <SettingsRow icon="lock" label="Mot de passe & Sécurité" onPress={() => router.push("/settings-pages/security")} />
+            <SettingsRow icon="credit-card" label="Moyens de paiement" isLast onPress={() => router.push("/settings-pages/payment")} />
           </View>
         </View>
 
         {/* Preferences Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>Préférences</Text>
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: 12 }]}>
             <SettingsRow
               icon="bell"
               label="Notifications Push"
@@ -130,7 +130,7 @@ export default function SettingsScreen() {
               toggleValue={locationEnabled}
               onToggle={setLocationEnabled}
             />
-            <SettingsRow icon="globe" label="Langue" value="Français" isLast />
+            <SettingsRow icon="globe" label="Langue" value="Français" isLast onPress={() => router.push({ pathname: "/placeholder", params: { title: "Langue" } })} />
           </View>
         </View>
 
@@ -143,10 +143,10 @@ export default function SettingsScreen() {
         {/* Support Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>Assistance</Text>
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
-            <SettingsRow icon="help-circle" label="Centre d'aide" />
-            <SettingsRow icon="file-text" label="Conditions d'utilisation" />
-            <SettingsRow icon="shield" label="Politique de confidentialité" isLast />
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: 12 }]}>
+            <SettingsRow icon="help-circle" label="Centre d'aide" onPress={() => router.push("/settings-pages/about")} />
+            <SettingsRow icon="file-text" label="Conditions d'utilisation" onPress={() => router.push("/settings-pages/about")} />
+            <SettingsRow icon="shield" label="Politique de confidentialité" isLast onPress={() => router.push("/settings-pages/about")} />
           </View>
         </View>
 

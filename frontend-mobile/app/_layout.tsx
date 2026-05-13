@@ -17,6 +17,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { AppDataProvider } from "@/context/AppDataContext";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { SettingsProvider } from "@/context/SettingsContext";
 import { ThemeProvider, useTheme } from "@/context/ThemeContext";
 
 SplashScreen.preventAutoHideAsync();
@@ -93,22 +94,24 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <ErrorBoundary>
-          <AuthProvider>
-            <QueryClientProvider client={queryClient}>
-              <AppDataProvider>
-                <GestureHandlerRootView>
-                  <KeyboardProvider>
-                    <RootLayoutNav />
-                    <ThemedStatusBar />
-                  </KeyboardProvider>
-                </GestureHandlerRootView>
-              </AppDataProvider>
-            </QueryClientProvider>
-          </AuthProvider>
-        </ErrorBoundary>
-      </ThemeProvider>
+      <SettingsProvider>
+        <ThemeProvider>
+          <ErrorBoundary>
+            <AuthProvider>
+              <QueryClientProvider client={queryClient}>
+                <AppDataProvider>
+                  <GestureHandlerRootView>
+                    <KeyboardProvider>
+                      <RootLayoutNav />
+                      <ThemedStatusBar />
+                    </KeyboardProvider>
+                  </GestureHandlerRootView>
+                </AppDataProvider>
+              </QueryClientProvider>
+            </AuthProvider>
+          </ErrorBoundary>
+        </ThemeProvider>
+      </SettingsProvider>
     </SafeAreaProvider>
   );
 }
