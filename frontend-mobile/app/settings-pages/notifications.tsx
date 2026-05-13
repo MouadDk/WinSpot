@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View, ScrollView, Switch } from "react-nat
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
-import { useAuth, NotificationSettings } from "@/context/AuthContext";
+import { useSettings } from "@/context/SettingsContext";
 
 /**
  * Screen to manage detailed notification preferences.
@@ -14,10 +14,10 @@ export default function NotificationsSettingsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { notifications, updateNotifications } = useAuth();
+  const { settings, updateSettings } = useSettings();
 
-  const toggleNotif = (key: keyof NotificationSettings) => {
-    updateNotifications({ [key]: !notifications[key] });
+  const toggleNotif = (key: string) => {
+    updateSettings({ notificationsEnabled: !settings.notificationsEnabled });
   };
 
   const Section = ({ title, children }: { title: string, children: React.ReactNode }) => (
@@ -59,23 +59,10 @@ export default function NotificationsSettingsScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <Section title="ACTIVITÉ">
           <Row 
-            label="Nouvelles missions" 
-            subLabel="Soyez alerté quand une mission correspond à votre profil."
-            value={notifications.offers}
-            onToggle={() => toggleNotif('offers')}
-          />
-          <Row 
-            label="Messages" 
-            subLabel="Notifications pour les nouveaux messages des recruteurs."
-            value={notifications.messages}
-            onToggle={() => toggleNotif('messages')}
-          />
-          <Row 
-            label="Wallet & Paiements" 
-            subLabel="Mises à jour sur vos transactions et solde WinCoin."
-            value={notifications.wallet}
-            onToggle={() => toggleNotif('wallet')}
-            isLast
+            label="Toutes les notifications" 
+            subLabel="Recevoir des alertes pour les missions et messages."
+            value={settings.notificationsEnabled}
+            onToggle={() => toggleNotif('all')}
           />
         </Section>
 
@@ -83,8 +70,8 @@ export default function NotificationsSettingsScreen() {
           <Row 
             label="Alertes de sécurité" 
             subLabel="Connexions suspectes ou tentatives de changement de MDP."
-            value={notifications.security}
-            onToggle={() => toggleNotif('security')}
+            value={true}
+            onToggle={() => {}}
             isLast
           />
         </Section>
@@ -93,8 +80,8 @@ export default function NotificationsSettingsScreen() {
           <Row 
             label="Offres marketing" 
             subLabel="Nouveautés, réductions et annonces partenaires."
-            value={notifications.marketing}
-            onToggle={() => toggleNotif('marketing')}
+            value={false}
+            onToggle={() => {}}
             isLast
           />
         </Section>

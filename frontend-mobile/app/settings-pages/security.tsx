@@ -1,15 +1,17 @@
 import { Feather } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
 import React from "react";
-import { Pressable, StyleSheet, Text, View, ScrollView, Alert } from "react-native";
+import { Pressable, StyleSheet, Text, View, ScrollView, Alert, Switch } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
+import { useSettings } from "@/context/SettingsContext";
 
 export default function SecurityScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { settings, requestLocationPermission } = useSettings();
 
   const handleAction = (actionId: "changePassword" | "twoFactor" | "devices") => {
     switch (actionId) {
@@ -52,10 +54,32 @@ export default function SecurityScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 20 }}>
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 16 }]}>
+        <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>CONNEXION</Text>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 16, marginBottom: 24 }]}>
           <Row icon="lock" label="Changer le mot de passe" actionId="changePassword" />
           <Row icon="shield" label="Authentification à deux facteurs" actionId="twoFactor" />
           <Row icon="smartphone" label="Appareils connectés" actionId="devices" isLast />
+        </View>
+
+        <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>PERMISSIONS</Text>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 16 }]}>
+          <View style={styles.permissionRow}>
+            <View style={[styles.iconBox, { backgroundColor: colors.primary + '15' }]}>
+              <Feather name="map-pin" size={18} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text style={[styles.rowLabel, { color: colors.foreground }]}>Localisation GPS</Text>
+              <Text style={[styles.rowSubLabel, { color: colors.mutedForeground }]}>
+                Nécessaire pour trouver des spots autour de vous.
+              </Text>
+            </View>
+            <Switch
+              value={settings.locationEnabled}
+              onValueChange={requestLocationPermission}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor="#FFF"
+            />
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -69,4 +93,9 @@ const styles = StyleSheet.create({
   title: { fontFamily: "Inter_700Bold", fontSize: 17 },
   card: { overflow: "hidden" },
   row: { flexDirection: "row", alignItems: "center", padding: 16 },
+  sectionLabel: { fontFamily: "Inter_600SemiBold", fontSize: 12, marginBottom: 8, marginLeft: 4, textTransform: "uppercase" },
+  permissionRow: { flexDirection: "row", alignItems: "center", padding: 16 },
+  iconBox: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center", marginRight: 12 },
+  rowLabel: { fontFamily: "Inter_600SemiBold", fontSize: 15 },
+  rowSubLabel: { fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 2 },
 });
