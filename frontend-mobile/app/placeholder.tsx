@@ -25,6 +25,8 @@ export default function PlaceholderScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 16, borderBottomColor: colors.border }]}>
         <Pressable
           onPress={() => router.back()}
+          accessibilityLabel="Retour"
+          accessibilityRole="button"
           style={({ pressed }) => [
             styles.backBtn,
             { backgroundColor: colors.card, borderColor: colors.border },

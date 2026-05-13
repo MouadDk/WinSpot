@@ -40,7 +40,15 @@ export default function ChangePasswordScreen() {
       // Simulate API call
       await new Promise((r) => setTimeout(r, 1000));
       Alert.alert("Succès", "Votre mot de passe a été modifié avec succès.", [
-        { text: "OK", onPress: () => router.back() }
+        { 
+          text: "OK", 
+          onPress: () => {
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+            router.back();
+          } 
+        }
       ]);
     } catch (error) {
       Alert.alert("Erreur", "Impossible de modifier le mot de passe.");

@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
 import React from "react";
-import { Pressable, StyleSheet, Text, View, ScrollView } from "react-native";
+import { Pressable, StyleSheet, Text, View, ScrollView, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
@@ -10,6 +10,18 @@ export default function AboutScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+
+  const openTerms = () => {
+    Linking.openURL('https://winspot.app/terms').catch(() => {
+      // Fallback or Alert
+    });
+  };
+
+  const openPrivacy = () => {
+    Linking.openURL('https://winspot.app/privacy').catch(() => {
+      // Fallback or Alert
+    });
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -32,10 +44,16 @@ export default function AboutScreen() {
         </View>
 
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}>
-            <Pressable style={[styles.row, { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+            <Pressable 
+              onPress={openTerms}
+              style={[styles.row, { borderBottomWidth: 1, borderBottomColor: colors.border }]}
+            >
                 <Text style={{ color: colors.foreground }}>Conditions d'utilisation</Text>
             </Pressable>
-            <Pressable style={styles.row}>
+            <Pressable 
+              onPress={openPrivacy}
+              style={styles.row}
+            >
                 <Text style={{ color: colors.foreground }}>Politique de confidentialité</Text>
             </Pressable>
         </View>

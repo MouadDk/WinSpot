@@ -11,21 +11,23 @@ export default function SecurityScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const handleAction = (label: string) => {
-    if (label === "Changer le mot de passe") {
-      router.push("/settings-pages/change-password");
-      return;
+  const handleAction = (actionId: "changePassword" | "twoFactor" | "devices") => {
+    switch (actionId) {
+      case "changePassword":
+        router.push("/settings-pages/change-password");
+        break;
+      case "twoFactor":
+        router.push("/settings-pages/two-factor-auth");
+        break;
+      case "devices":
+        Alert.alert("Appareils connectés", "Cette action sera implémentée prochainement.");
+        break;
     }
-    if (label === "Authentification à deux facteurs") {
-      router.push("/settings-pages/two-factor-auth");
-      return;
-    }
-    Alert.alert(label, "Cette action sera implémentée prochainement.");
   };
 
-  const Row = ({ icon, label, isLast = false }: { icon: any, label: string, isLast?: boolean }) => (
+  const Row = ({ icon, label, actionId, isLast = false }: { icon: any, label: string, actionId: any, isLast?: boolean }) => (
     <Pressable 
-      onPress={() => handleAction(label)}
+      onPress={() => handleAction(actionId)}
       style={({ pressed }) => [
         styles.row, 
         !isLast && { borderBottomColor: colors.border, borderBottomWidth: 1 },
@@ -51,9 +53,9 @@ export default function SecurityScreen() {
 
       <ScrollView contentContainerStyle={{ padding: 20 }}>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 16 }]}>
-          <Row icon="lock" label="Changer le mot de passe" />
-          <Row icon="shield" label="Authentification à deux facteurs" />
-          <Row icon="smartphone" label="Appareils connectés" isLast />
+          <Row icon="lock" label="Changer le mot de passe" actionId="changePassword" />
+          <Row icon="shield" label="Authentification à deux facteurs" actionId="twoFactor" />
+          <Row icon="smartphone" label="Appareils connectés" actionId="devices" isLast />
         </View>
       </ScrollView>
     </View>

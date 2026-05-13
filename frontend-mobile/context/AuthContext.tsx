@@ -89,7 +89,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const raw = await AsyncStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw) as PersistedAuth;
-          setState({ ...DEFAULT_STATE, ...parsed });
+          const mergedNotifications = { 
+            ...DEFAULT_STATE.notifications, 
+            ...(parsed.notifications || {}) 
+          };
+          setState({ 
+            ...DEFAULT_STATE, 
+            ...parsed, 
+            notifications: mergedNotifications 
+          });
         } else {
           setState(DEFAULT_STATE);
         }

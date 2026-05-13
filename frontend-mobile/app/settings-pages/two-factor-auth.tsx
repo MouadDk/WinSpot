@@ -84,7 +84,7 @@ export default function TwoFactorAuthScreen() {
           <View style={[styles.infoBox, { backgroundColor: colors.secondary }]}>
             <Feather name="info" size={18} color={colors.primary} style={{ marginRight: 12 }} />
             <Text style={[styles.infoText, { color: colors.foreground }]}>
-              Votre compte est actuellement protégé par la 2FA.
+              2FA simulée : protégé localement.
             </Text>
           </View>
         )}

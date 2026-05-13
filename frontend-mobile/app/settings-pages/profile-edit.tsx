@@ -23,14 +23,29 @@ export default function ProfileEditScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
-    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!trimmedFirstName || !trimmedLastName || !normalizedEmail) {
       Alert.alert("Erreur", "Veuillez remplir tous les champs.");
+      return;
+    }
+
+    // Simple email validation regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(normalizedEmail)) {
+      Alert.alert("Erreur", "Veuillez entrer une adresse email valide.");
       return;
     }
 
     setLoading(true);
     try {
-      await updateUser({ firstName, lastName, email });
+      await updateUser({ 
+        firstName: trimmedFirstName, 
+        lastName: trimmedLastName, 
+        email: normalizedEmail 
+      });
       router.back();
     } catch (error) {
       Alert.alert("Erreur", "Impossible de mettre à jour le profil.");
@@ -50,6 +65,8 @@ export default function ProfileEditScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 16, borderBottomColor: colors.border }]}>
         <Pressable
           onPress={() => router.back()}
+          accessibilityLabel="Retour"
+          accessibilityRole="button"
           style={({ pressed }) => [
             styles.backBtn,
             { backgroundColor: colors.card, borderColor: colors.border },
@@ -59,7 +76,7 @@ export default function ProfileEditScreen() {
           <Feather name="chevron-left" size={20} color={colors.foreground} />
         </Pressable>
         <Text style={[styles.title, { color: colors.foreground }]}>Modifier le profil</Text>
-        <Pressable onPress={handleSave} disabled={loading}>
+        <Pressable onPress={handleSave} disabled={loading} accessibilityLabel="Enregistrer les modifications" accessibilityRole="button">
           {loading ? (
             <ActivityIndicator size="small" color={colors.primary} />
           ) : (
@@ -74,6 +91,8 @@ export default function ProfileEditScreen() {
           <Pressable 
             style={[styles.changeAvatarBtn, { backgroundColor: colors.primary }]}
             onPress={handleChangePhoto}
+            accessibilityLabel="Modifier la photo de profil"
+            accessibilityRole="button"
           >
             <Feather name="camera" size={16} color={colors.primaryForeground} />
           </Pressable>
