@@ -32,4 +32,12 @@ This mobile setup stays in managed Expo, so no `android` or `ios` folders need t
 - `frontend/.env.example` sets the web client backend URL.
 - `mobile/.env.example` sets the Expo public backend URL for future API calls.
 
+## AI verification setup
+
+The publication verification flow now uses Cloudinary for image storage and HuggingFace endpoints for OCR + restaurant classification.
+
+Read the full setup and testing guide here:
+
+- [AI_CLOUDINARY_HUGGINGFACE_WORKFLOW.md](./AI_CLOUDINARY_HUGGINGFACE_WORKFLOW.md)
+
 # Pub2Win

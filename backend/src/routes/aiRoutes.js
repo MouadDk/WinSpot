@@ -1,48 +1,58 @@
 import express from 'express';
 import multer from 'multer';
-import fs from 'fs';
-import path from 'path';
-import FineTuneData from '../models/FineTuneData.js'; // Your fine-tuning DB model
-import imageAnalyse from '../ai/imageanalyse.js'; 
+import FineTuneData from '../models/FineTuneData.js';
+import imageAnalyse from '../ai/imageanalyse.js';
 import Transaction from '../models/Transaction.js';
-import User from '../models/User.js';
+import { requireRole } from '../middleware/auth.js';
+import { uploadImageBuffer } from '../services/cloudinaryStorage.js';
 
 const { processImage } = imageAnalyse;
 
 const router = express.Router();
 
-const storage = multer.diskStorage({
-    destination: 'uploads/',
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(file.originalname) || '.jpg'; // Fallback to .jpg
-        cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+function normalizeTag(value) {
+    return String(value || '').toUpperCase().replace(/[^A-Z0-9@#]/g, '');
+}
+
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: Number(process.env.AI_UPLOAD_MAX_BYTES ?? 10 * 1024 * 1024)
+    },
+    fileFilter: (req, file, cb) => {
+        if (!file.mimetype?.startsWith('image/')) {
+            cb(new Error('Only image uploads are supported.'));
+            return;
+        }
+
+        cb(null, true);
     }
 });
-const upload = multer({ storage });
 
 // POST /api/ai/verify-scan
-router.post('/verify-scan', upload.single('photo'), async (req, res) => {
+router.post('/verify-scan', requireRole('influencer'), upload.single('photo'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ success: false, message: 'No image uploaded.' });
         }
 
-        const imagePath = req.file.path;
-        
+        const cloudinaryImage = await uploadImageBuffer(req.file.buffer, req.file.originalname);
+
         // You can pass the required tag from the frontend (e.g., from the QR code data)
         // Defaulting to @PUB2WIN if the frontend doesn't send one
-        const expectedTag = (req.body.requiredTag || '@PUB2WIN').toUpperCase();
+        const expectedTag = normalizeTag(req.body.requiredTag || '@PUB2WIN');
         const { transactionId } = req.body;
 
         // 1. Run the Image through your AI pipeline
-        const aiData = await processImage(imagePath);
+        const aiData = await processImage(cloudinaryImage.url);
 
         // 2. APPROVAL LOGIC
         // Force all detected text to uppercase so we don't fail on lowercase typos
-        const upperCaseTags = aiData.visible_text.map(tag => tag.toUpperCase());
-        
-        const hasTag = upperCaseTags.includes(expectedTag);
+        const visibleText = aiData.visible_text || [];
+        const normalizedTextItems = visibleText.map(normalizeTag);
+        const normalizedTextBlob = normalizeTag(visibleText.join(' '));
+
+        const hasTag = normalizedTextItems.includes(expectedTag) || normalizedTextBlob.includes(expectedTag);
         const isRestaurant = aiData.is_restaurant;
 
         let status = 'denied';
@@ -70,7 +80,8 @@ router.post('/verify-scan', upload.single('photo'), async (req, res) => {
 
         // 3. Save to MongoDB for your Fine-Tuning later!
         const newEntry = new FineTuneData({
-            imageUrl: `/uploads/${req.file.filename}`, // Save public URL for admin review
+            imageUrl: cloudinaryImage.url,
+            cloudinaryPublicId: cloudinaryImage.publicId,
             transactionId: transactionId || null,
             adminStatus: 'pending', // Waiting for admin review
             conversations: [
@@ -85,6 +96,7 @@ router.post('/verify-scan', upload.single('photo'), async (req, res) => {
             success: true,
             status: status, // "approved" or "denied"
             reason: reason,
+            image_url: cloudinaryImage.url,
             ai_data: aiData
         });
 

@@ -3,6 +3,8 @@ import mongoose from 'mongoose';
 const fineTuneDataSchema = new mongoose.Schema({
     // Store the local path or cloud URL of the image
     imageUrl: { type: String, required: true },
+
+    cloudinaryPublicId: { type: String },
     
     // This exact array structure is required by LLaVA for fine-tuning
     conversations: [
