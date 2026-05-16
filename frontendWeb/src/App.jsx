@@ -7,6 +7,8 @@ import RestaurantDashboard from './pages/RestaurantDashboard';
 import InfluencerDashboard from './pages/InfluencerDashboard';
 import ThemeToggle from './components/ui/ThemeToggle';
 import RoleGuard from './components/auth/RoleGuard';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
       {/* Public Routes */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/choose-role" element={<RoleSelection />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
 
       {/* Restaurant Auth Routes */}
       <Route

@@ -3,6 +3,7 @@ import { Sparkles, Loader2, ArrowRight } from 'lucide-react';
 import AuthLayout from '../components/layout/AuthLayout';
 import { useAuth } from '../contexts/AuthContext';
 import { apiUrl } from '../lib/api';
+import { Link } from 'react-router-dom';
 
 export default function InfluencerAuth({ isSignUp }) {
   const { login } = useAuth();
@@ -183,7 +184,14 @@ export default function InfluencerAuth({ isSignUp }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mot de passe</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Mot de passe</label>
+              {!isSignUp && (
+                <Link to="/forgot-password" className="text-xs text-violet-500 hover:text-violet-400 font-medium transition-colors">
+                  Mot de passe oublié ?
+                </Link>
+              )}
+            </div>
             <input
               type="password"
               required
