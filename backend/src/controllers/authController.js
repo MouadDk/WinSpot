@@ -2,6 +2,8 @@ import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { logActivity } from '../config/logger.js';
+import crypto from 'crypto';
+import { sendEmail } from '../services/emailService.js';
 
 if (!process.env.JWT_SECRET) {
   throw new Error('FATAL: JWT_SECRET environment variable is not set. Server cannot start.');
@@ -147,3 +149,103 @@ export const googleCallback = async (req, res) => {
     res.status(500).json({ success: false, message: 'Erreur lors de la connexion avec Google.', error: error.message });
   }
 };
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const normalizedEmail = email?.toLowerCase().trim();
+
+    if (!normalizedEmail) {
+      return res.status(400).json({ success: false, message: 'Veuillez fournir une adresse email.' });
+    }
+
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
+      // Return success even if user not found to prevent email enumeration
+      return res.status(200).json({ success: true, message: 'Si votre email est enregistré, vous recevrez un lien de réinitialisation.' });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    const resetPasswordExpires = Date.now() + 3600000; // 1 hour
+
+    user.resetPasswordToken = resetPasswordToken;
+    user.resetPasswordExpires = resetPasswordExpires;
+    await user.save();
+
+    // Send email
+    // Check if frontend URL is provided via env var or use a default one
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
+
+    const message = `
+      Vous avez demandé une réinitialisation de mot de passe.
+      Veuillez cliquer sur ce lien pour réinitialiser votre mot de passe:
+      ${resetUrl}
+
+      Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet email.
+      Ce lien expirera dans une heure.
+    `;
+
+    const emailResult = await sendEmail({
+      to: user.email,
+      subject: 'Réinitialisation de mot de passe - WinSpot',
+      text: message,
+    });
+
+    if (!emailResult.success) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save({ validateBeforeSave: false });
+      return res.status(500).json({ success: false, message: 'Erreur lors de l\'envoi de l\'email.' });
+    }
+
+    logActivity('info', { userId: user._id.toString(), action: 'auth.forgot_password', status: 'success', message: `Password reset email sent to ${normalizedEmail}` });
+
+    res.status(200).json({ success: true, message: 'Si votre email est enregistré, vous recevrez un lien de réinitialisation.' });
+  } catch (error) {
+    logActivity('error', { action: 'auth.forgot_password', status: 'failed', message: error.message });
+    res.status(500).json({ success: false, message: 'Erreur lors de la demande de réinitialisation.' });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ success: false, message: 'Veuillez fournir un nouveau mot de passe.' });
+    }
+
+    // Hash token from URL to match the one in DB
+    const resetPasswordToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Le lien de réinitialisation est invalide ou a expiré.' });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    logActivity('info', { userId: user._id.toString(), action: 'auth.reset_password', status: 'success', message: `Password reset successfully for ${user.email}` });
+
+    res.status(200).json({ success: true, message: 'Votre mot de passe a été réinitialisé avec succès.' });
+  } catch (error) {
+    logActivity('error', { action: 'auth.reset_password', status: 'failed', message: error.message });
+    res.status(500).json({ success: false, message: 'Erreur lors de la réinitialisation du mot de passe.' });
+  }
+};
+

@@ -30,7 +30,9 @@ const userSchema = new mongoose.Schema({
   winCoinsBalance: {
     type: Number,
     default: 0
-  }
+  },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date
 }, { timestamps: true });
 
 // Lowercase email before saving
