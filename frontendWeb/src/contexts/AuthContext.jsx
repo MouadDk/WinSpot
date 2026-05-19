@@ -34,6 +34,12 @@ export const AuthProvider = ({ children }) => {
   }, [token]);
 
   const login = (newToken, userData) => {
+    // Save BOTH token and user to localStorage synchronously before
+    // any window.location.href can trigger a full page reload.
+    // Previously the token was only saved in the useEffect (which runs
+    // asynchronously after re-render), causing a race condition where
+    // the page reload happened before the token was persisted.
+    localStorage.setItem('pub2win_token', newToken);
     localStorage.setItem('pub2win_user', JSON.stringify(userData));
     setUser(userData);
     setToken(newToken);

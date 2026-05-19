@@ -10,12 +10,14 @@ function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  
+
   // Dashboard state
   const [merchants, setMerchants] = useState([]);
-  const [influencers, setInfluencers] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
   const [circulatingCoins, setCirculatingCoins] = useState(0);
+  const [platformRevenue, setPlatformRevenue] = useState(0);
+  const [totalRedemptions, setTotalRedemptions] = useState(0);
   const [loading, setLoading] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState({});
   const [activeTab, setActiveTab] = useState('merchants');
@@ -23,7 +25,6 @@ function App() {
   useEffect(() => {
     const savedToken = localStorage.getItem('adminToken');
     if (savedToken) {
-      // Verify token is still valid by fetching data
       fetchData(savedToken).then(() => {
         setIsAuthenticated(true);
       }).catch(() => {
@@ -67,29 +68,33 @@ function App() {
     setLoading(true);
     try {
       const headers = { 'Authorization': `Bearer ${authToken}` };
-      const [merchRes, infRes, withRes, statsRes] = await Promise.all([
+      const [merchRes, custRes, withRes, statsRes] = await Promise.all([
         fetch(`${API_URL}/admin/merchants`, { headers }),
-        fetch(`${API_URL}/admin/influencers`, { headers }),
+        fetch(`${API_URL}/admin/customers`, { headers }),
         fetch(`${API_URL}/admin/withdrawals/pending`, { headers }),
         fetch(`${API_URL}/admin/stats`, { headers })
       ]);
-      
+
       // If any response is 401, token is expired
-      if ([merchRes, infRes, withRes, statsRes].some(r => r.status === 401)) {
+      if ([merchRes, custRes, withRes, statsRes].some(r => r.status === 401)) {
         localStorage.removeItem('adminToken');
         setIsAuthenticated(false);
         throw new Error('Session expired');
       }
-      
+
       const merchData = await merchRes.json();
-      const infData = await infRes.json();
+      const custData = await custRes.json();
       const withData = await withRes.json();
       const statsData = await statsRes.json();
-      
+
       if (merchData.success) setMerchants(merchData.merchants);
-      if (infData.success) setInfluencers(infData.influencers);
+      if (custData.success) setCustomers(custData.customers);
       if (withData.success) setWithdrawals(withData.transactions);
-      if (statsData.success) setCirculatingCoins(statsData.stats?.circulatingWinCoins ?? 0);
+      if (statsData.success) {
+        setCirculatingCoins(statsData.stats?.circulatingWinCoins ?? 0);
+        setPlatformRevenue(statsData.stats?.platformRevenue ?? 0);
+        setTotalRedemptions(statsData.stats?.totalRedemptions ?? 0);
+      }
     } catch (err) {
       console.error('Failed to fetch data', err);
       throw err;
@@ -165,7 +170,7 @@ function App() {
       const data = await res.json();
       if (data.success) {
         alert(`Retrait ${action === 'approve' ? 'approuvé' : 'rejeté'} avec succès.`);
-        fetchData(); // Refresh all data including balances
+        fetchData();
       } else {
         alert('Erreur: ' + data.message);
       }
@@ -178,24 +183,24 @@ function App() {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', width: '100%' }}>
         <div className="glass-panel" style={{ width: '100%', maxWidth: '400px' }}>
-          <h2 style={{ textAlign: 'center', marginBottom: '2rem', color: 'white' }}>Pub2Win Admin</h2>
+          <img src="/winspot-logo.png" alt="WinSpot" style={{ height: '80px', display: 'block', margin: '0 auto 2rem auto', objectFit: 'contain' }} />
           {error && <div style={{ color: '#ff4d4d', marginBottom: '1rem', textAlign: 'center', fontSize: '0.9rem' }}>{error}</div>}
           <form onSubmit={handleLogin}>
-            <input 
-              type="email" 
-              className="input-field" 
-              placeholder="Email Admin" 
+            <input
+              type="email"
+              className="input-field"
+              placeholder="Email Admin"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              required 
+              required
             />
-            <input 
-              type="password" 
-              className="input-field" 
-              placeholder="Mot de passe" 
+            <input
+              type="password"
+              className="input-field"
+              placeholder="Mot de passe"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              required 
+              required
             />
             <button type="submit" className="btn" style={{ width: '100%', marginTop: '1rem' }}>
               Se connecter
@@ -210,23 +215,40 @@ function App() {
     <div className="app-layout">
       {/* Sidebar */}
       <aside className="sidebar">
-        <h2>Pub2Win Admin</h2>
-        
-        <div 
+        <div style={{ padding: '0 1rem 2.5rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <img src="/winspot-logo.png" alt="WinSpot" style={{ height: '56px', objectFit: 'contain' }} />
+          <span 
+            style={{ 
+              fontFamily: 'cursive', 
+              fontStyle: 'italic', 
+              color: '#a855f7', 
+              fontSize: '13px',
+              alignSelf: 'flex-end',
+              marginRight: '2rem',
+              marginTop: '-5px',
+              transform: 'rotate(-4deg)',
+              opacity: 0.9
+            }}
+          >
+            Admin
+          </span>
+        </div>
+
+        <div
           className={`nav-item ${activeTab === 'merchants' ? 'active' : ''}`}
           onClick={() => setActiveTab('merchants')}
         >
           <span style={{ marginRight: '10px' }}>🏪</span> Merchants
         </div>
-        
-        <div 
-          className={`nav-item ${activeTab === 'influencers' ? 'active' : ''}`}
-          onClick={() => setActiveTab('influencers')}
+
+        <div
+          className={`nav-item ${activeTab === 'customers' ? 'active' : ''}`}
+          onClick={() => setActiveTab('customers')}
         >
-          <span style={{ marginRight: '10px' }}>📱</span> Influencers
+          <span style={{ marginRight: '10px' }}>👤</span> Customers
         </div>
 
-        <div 
+        <div
           className={`nav-item ${activeTab === 'cashouts' ? 'active' : ''}`}
           onClick={() => setActiveTab('cashouts')}
         >
@@ -250,41 +272,55 @@ function App() {
         <div className="glass-panel" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
           <div className="header">
             <div>
-            <h1 style={{ background: 'linear-gradient(to right, #ffffff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              {activeTab === 'merchants' && 'Gestion des Merchants'}
-              {activeTab === 'influencers' && 'Gestion des Influencers'}
-              {activeTab === 'cashouts' && 'Demandes de Retrait'}
-            </h1>
-            <p>Gérez les comptes et les fonds en temps réel</p>
+              <h1 style={{ background: 'linear-gradient(to right, #ffffff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                {activeTab === 'merchants' && 'Gestion des Merchants'}
+                {activeTab === 'customers' && 'Gestion des Clients'}
+                {activeTab === 'cashouts' && 'Demandes de Retrait'}
+              </h1>
+              <p>Gérez les comptes et les fonds en temps réel</p>
+            </div>
           </div>
-        </div>
 
-        {!loading && (
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-title">Total Merchants</div>
-              <div className="stat-value" style={{ color: '#10b981' }}>{merchants.length}</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-title">Total Influencers</div>
-              <div className="stat-value" style={{ color: '#3b82f6' }}>{influencers.length}</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-title">Demandes en attente</div>
-              <div className="stat-value" style={{ color: '#f59e0b' }}>
-                {withdrawals.length}
-                <span style={{ fontSize: '1.2rem', marginLeft: '0.5rem' }}>⏳</span>
+          {!loading && (
+            <div className="stats-grid">
+              <div className="stat-card">
+                <div className="stat-title">Total Merchants</div>
+                <div className="stat-value" style={{ color: '#10b981' }}>{merchants.length}</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-title">Total Customers</div>
+                <div className="stat-value" style={{ color: '#3b82f6' }}>{customers.length}</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-title">QR Redemptions</div>
+                <div className="stat-value" style={{ color: '#a78bfa' }}>
+                  {totalRedemptions}
+                  <span style={{ fontSize: '1.2rem', marginLeft: '0.5rem' }}>📱</span>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-title">WinCoins en circulation</div>
+                <div className="stat-value" style={{ color: '#f59e0b' }}>
+                  {Number(circulatingCoins || 0).toLocaleString()}
+                  <span style={{ fontSize: '1.2rem', marginLeft: '0.5rem' }}>🪙</span>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-title">Platform Revenue (Fees)</div>
+                <div className="stat-value" style={{ color: '#10b981' }}>
+                  {Number(platformRevenue || 0).toFixed(1)} WC
+                  <span style={{ fontSize: '1.2rem', marginLeft: '0.5rem' }}>💰</span>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-title">Demandes en attente</div>
+                <div className="stat-value" style={{ color: '#ef4444' }}>
+                  {withdrawals.length}
+                  <span style={{ fontSize: '1.2rem', marginLeft: '0.5rem' }}>⏳</span>
+                </div>
               </div>
             </div>
-            <div className="stat-card">
-              <div className="stat-title">WinCoins en circulation</div>
-              <div className="stat-value" style={{ color: '#a78bfa' }}>
-                {Number(circulatingCoins || 0).toLocaleString()}
-                <span style={{ fontSize: '1.2rem', marginLeft: '0.5rem' }}>🪙</span>
-              </div>
-            </div>
-          </div>
-        )}
+          )}
 
           {loading ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem', color: '#94a3b8' }}>
@@ -314,9 +350,9 @@ function App() {
                         <td><span className="badge-green">{m.winCoinsBalance} 🪙</span></td>
                         <td>
                           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                            <input 
-                              type="number" 
-                              className="input-field" 
+                            <input
+                              type="number"
+                              className="input-field"
                               style={{ margin: 0, width: '100px', padding: '0.5rem' }}
                               placeholder="Montant"
                               value={topUpAmount[m._id] || ''}
@@ -326,8 +362,8 @@ function App() {
                           </div>
                         </td>
                         <td>
-                          <button 
-                            className="btn btn-sm btn-danger" 
+                          <button
+                            className="btn btn-sm btn-danger"
                             onClick={() => handleDeleteUser(m._id, 'Merchant')}
                             title="Supprimer"
                           >
@@ -347,7 +383,7 @@ function App() {
                 </table>
               )}
 
-              {activeTab === 'influencers' && (
+              {activeTab === 'customers' && (
                 <table>
                   <thead>
                     <tr>
@@ -358,18 +394,18 @@ function App() {
                     </tr>
                   </thead>
                   <tbody>
-                    {influencers.map(inf => (
-                      <tr key={inf._id}>
+                    {customers.map(c => (
+                      <tr key={c._id}>
                         <td>
-                          <div style={{ fontWeight: '600', color: '#fff' }}>{inf.firstName || 'Nom inconnu'} {inf.lastName || ''}</div>
-                          <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}>ID: {inf._id.substring(0, 12)}...</div>
+                          <div style={{ fontWeight: '600', color: '#fff' }}>{c.firstName || 'Nom inconnu'} {c.lastName || ''}</div>
+                          <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}>ID: {c._id.substring(0, 12)}...</div>
                         </td>
-                        <td style={{ color: '#cbd5e1' }}>{inf.email}</td>
-                        <td><span className="badge-blue">{inf.winCoinsBalance} 🪙</span></td>
+                        <td style={{ color: '#cbd5e1' }}>{c.email}</td>
+                        <td><span className="badge-blue">{c.winCoinsBalance} 🪙</span></td>
                         <td>
-                          <button 
-                            className="btn btn-sm btn-danger" 
-                            onClick={() => handleDeleteUser(inf._id, 'Influencer')}
+                          <button
+                            className="btn btn-sm btn-danger"
+                            onClick={() => handleDeleteUser(c._id, 'Customer')}
                             title="Supprimer"
                           >
                             🗑️
@@ -377,10 +413,10 @@ function App() {
                         </td>
                       </tr>
                     ))}
-                    {influencers.length === 0 && (
+                    {customers.length === 0 && (
                       <tr>
                         <td colSpan="4" style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>
-                          Aucun influenceur trouvé.
+                          Aucun client trouvé.
                         </td>
                       </tr>
                     )}
@@ -394,7 +430,8 @@ function App() {
                       <th>Date</th>
                       <th>Utilisateur</th>
                       <th>Infos de Paiement</th>
-                      <th>Montant Demandé</th>
+                      <th>Montant (Net)</th>
+                      <th>Fee (1.5%)</th>
                       <th>Actions (Virement)</th>
                     </tr>
                   </thead>
@@ -426,17 +463,22 @@ function App() {
                           </span>
                         </td>
                         <td>
+                          <span className="badge-green" style={{ fontSize: '0.85rem', padding: '0.3rem 0.8rem' }}>
+                            {w.fee} 🪙
+                          </span>
+                        </td>
+                        <td>
                           <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button 
-                              className="btn btn-sm" 
+                            <button
+                              className="btn btn-sm"
                               style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', boxShadow: 'none' }}
                               onClick={() => handleWithdrawalAction(w._id, 'approve')}
                               title="Marquer comme payé (Approuver)"
                             >
                               ✅ Approuver
                             </button>
-                            <button 
-                              className="btn btn-sm btn-danger" 
+                            <button
+                              className="btn btn-sm btn-danger"
                               onClick={() => handleWithdrawalAction(w._id, 'reject')}
                               title="Rejeter et Rembourser"
                             >
@@ -448,7 +490,7 @@ function App() {
                     ))}
                     {withdrawals.length === 0 && (
                       <tr>
-                        <td colSpan="4" style={{ textAlign: 'center', color: '#64748b', padding: '3rem' }}>
+                        <td colSpan="6" style={{ textAlign: 'center', color: '#64748b', padding: '3rem' }}>
                           🎉 Aucune demande de retrait en attente.
                         </td>
                       </tr>

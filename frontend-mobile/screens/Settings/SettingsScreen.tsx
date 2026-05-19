@@ -152,7 +152,7 @@ export default function SettingsScreen() {
 
         <View style={{ alignItems: "center", marginTop: 20, marginBottom: 40 }}>
           <Text style={{ fontFamily: "Inter_500Medium", fontSize: 13, color: colors.mutedForeground }}>
-            Pub2Win v{APP_CONFIG.version}
+            WinSpot v{APP_CONFIG.version}
           </Text>
         </View>
       </ScrollView>

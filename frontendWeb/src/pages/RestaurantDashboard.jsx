@@ -1,472 +1,278 @@
 import { useEffect, useState } from 'react';
-import { Loader2, LayoutDashboard, Megaphone, FileText, Wallet, Settings, Coins, Users, BarChart3, Plus, RefreshCw } from 'lucide-react';
+import { useLocation, Outlet, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import {
+  Loader2, LayoutDashboard, Megaphone, Wallet, Settings,
+  Coins, BarChart3, AlertTriangle, ArrowRight, QrCode,
+  Sparkles, ArrowUpRight,
+} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import MetricCard from '../components/dashboard/MetricCard';
-import OfferCard from '../components/dashboard/OfferCard';
 import { apiUrl, authHeaders, parseApiResponse } from '../lib/api';
 
-const initialForm = {
-  establishmentName: '',
-  category: 'Restaurant',
-  description: '',
-  minConsumption: '',
-  winCoinsPerPublication: '',
-  totalWinCoinsBudget: '',
-  address: '',
-  city: '',
-};
-
-// ─── Navigation Items ───────────────────────────────────────
+// ─── Navigation Items (all wired to real routes) ────────────────────────────
 const navItems = [
-  { label: 'Overview', icon: LayoutDashboard, href: '/restaurant-dashboard', active: true },
-  { label: 'Offers', icon: Megaphone, href: '#' },
-  { label: 'Publications', icon: FileText, href: '#' },
-  { label: 'Wallet', icon: Wallet, href: '#' },
-  { label: 'Settings', icon: Settings, href: '#' },
+  { label: 'Overview',  icon: LayoutDashboard, href: '/restaurant-dashboard' },
+  { label: 'Offers',   icon: Megaphone,        href: '/restaurant-dashboard/offers' },
+  { label: 'Wallet',   icon: Wallet,           href: '/restaurant-dashboard/wallet' },
+  { label: 'Settings', icon: Settings,         href: '/restaurant-dashboard/settings' },
 ];
 
-// ─── Component ──────────────────────────────────────────────
-export default function RestaurantDashboard() {
-  const { user, token } = useAuth();
+// ─── Animated quick-action card ─────────────────────────────────────────────
+function QuickAction({ icon: Icon, title, description, href, gradient, delay = 0 }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay, ease: 'easeOut' }}
+    >
+      <Link
+        to={href}
+        className="group relative flex items-center gap-4 rounded-2xl p-5 border border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800/50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+      >
+        {/* Hover glow */}
+        <div className={`absolute inset-0 opacity-0 group-hover:opacity-[0.04] transition-opacity duration-500 ${gradient}`} />
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${gradient} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+          <Icon className="w-6 h-6 text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-bold text-slate-800 dark:text-white text-sm group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">{title}</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>
+        </div>
+        <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-cyan-500 group-hover:translate-x-1 transition-all duration-300 shrink-0" />
+      </Link>
+    </motion.div>
+  );
+}
+
+/**
+ * OverviewContent — the "index" page for the restaurant dashboard.
+ */
+function OverviewContent() {
+  const { token } = useAuth();
   const [offers, setOffers] = useState([]);
-  const [loadingOffers, setLoadingOffers] = useState(true);
-  const [savingOffer, setSavingOffer] = useState(false);
-  const [error, setError] = useState(null);
-  const [editingOfferId, setEditingOfferId] = useState(null);
-  const [form, setForm] = useState(initialForm);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token) {
-      return;
-    }
-
+    if (!token) return;
     let ignore = false;
 
-    const loadOffers = async () => {
-      setLoadingOffers(true);
-      setError(null);
-
-      try {
-        const response = await fetch(apiUrl('/api/offers/mine'), {
-          headers: authHeaders(token),
-        });
-
-        const data = await parseApiResponse(response);
-        if (!data.success) {
-          throw new Error(data.message || 'Unable to load your offers');
-        }
-
+    Promise.all([
+      fetch(apiUrl('/api/offers/mine'), { headers: authHeaders(token) }),
+      fetch(apiUrl('/api/transactions/balance'), { headers: authHeaders(token) }),
+    ])
+      .then(async ([offersRes, balanceRes]) => {
+        const offersData = await parseApiResponse(offersRes);
+        const balanceData = await parseApiResponse(balanceRes);
         if (!ignore) {
-          setOffers(data.offers || []);
+          setOffers(offersData.offers || []);
+          setWalletBalance(balanceData.balance ?? 0);
         }
-      } catch (fetchError) {
-        if (!ignore) {
-          setError(fetchError.message);
-        }
-      } finally {
-        if (!ignore) {
-          setLoadingOffers(false);
-        }
-      }
-    };
+      })
+      .catch(() => {})
+      .finally(() => { if (!ignore) setLoading(false); });
 
-    loadOffers();
-
-    return () => {
-      ignore = true;
-    };
+    return () => { ignore = true; };
   }, [token]);
 
-  const resetForm = () => {
-    setEditingOfferId(null);
-    setForm(initialForm);
-  };
-
-  const refreshOffers = async () => {
-    if (!token) return;
-    setLoadingOffers(true);
-
-    try {
-      const response = await fetch(apiUrl('/api/offers/mine'), {
-        headers: authHeaders(token),
-      });
-
-      const data = await parseApiResponse(response);
-      if (!data.success) {
-        throw new Error(data.message || 'Unable to load your offers');
-      }
-
-      setOffers(data.offers || []);
-    } catch (refreshError) {
-      setError(refreshError.message);
-    } finally {
-      setLoadingOffers(false);
-    }
-  };
-
-  const buildPayload = () => ({
-    establishmentName: form.establishmentName.trim(),
-    category: form.category,
-    description: form.description.trim(),
-    minConsumption: Number(form.minConsumption),
-    winCoinsPerPublication: Number(form.winCoinsPerPublication),
-    totalWinCoinsBudget: Number(form.totalWinCoinsBudget),
-    location: {
-      type: 'Point',
-      coordinates: [0, 0],
-      address: form.address.trim(),
-      city: form.city.trim(),
-    },
-  });
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    if (!token) return;
-
-    setSavingOffer(true);
-    setError(null);
-
-    try {
-      const response = await fetch(
-        editingOfferId ? apiUrl(`/api/offers/${editingOfferId}`) : apiUrl('/api/offers'),
-        {
-          method: editingOfferId ? 'PUT' : 'POST',
-          headers: authHeaders(token, {
-            'Content-Type': 'application/json',
-          }),
-          body: JSON.stringify(buildPayload()),
-        }
-      );
-
-      const data = await parseApiResponse(response);
-      if (!data.success) {
-        throw new Error(data.message || 'Unable to save offer');
-      }
-
-      resetForm();
-      await refreshOffers();
-    } catch (submitError) {
-      setError(submitError.message);
-    } finally {
-      setSavingOffer(false);
-    }
-  };
-
-  const handleEdit = (offer) => {
-    setEditingOfferId(offer._id);
-    setForm({
-      establishmentName: offer.establishmentName || '',
-      category: offer.category || 'Restaurant',
-      description: offer.description || '',
-      minConsumption: offer.minConsumption?.toString() || '',
-      winCoinsPerPublication: (offer.winCoinsPerPublication ?? offer.winCoinsReward)?.toString() || '',
-      totalWinCoinsBudget: (offer.totalWinCoinsBudget ?? 0).toString(),
-      address: offer.location?.address || '',
-      city: offer.location?.city || '',
-    });
-  };
-
-  const handleDelete = async (offer) => {
-    if (!token || !window.confirm(`Delete offer for ${offer.establishmentName}?`)) return;
-
-    setError(null);
-
-    try {
-      const response = await fetch(apiUrl(`/api/offers/${offer._id}`), {
-        method: 'DELETE',
-        headers: authHeaders(token),
-      });
-
-      const data = await parseApiResponse(response);
-      if (!data.success) {
-        throw new Error(data.message || 'Unable to delete offer');
-      }
-
-      await refreshOffers();
-    } catch (deleteError) {
-      setError(deleteError.message);
-    }
-  };
-
-  const handleToggleActive = async (offer) => {
-    if (!token) return;
-
-    try {
-      const response = await fetch(apiUrl(`/api/offers/${offer._id}`), {
-        method: 'PUT',
-        headers: authHeaders(token, {
-          'Content-Type': 'application/json',
-        }),
-        body: JSON.stringify({ isActive: !offer.isActive }),
-      });
-
-      const data = await parseApiResponse(response);
-      if (!data.success) {
-        throw new Error(data.message || 'Unable to update offer');
-      }
-
-      await refreshOffers();
-    } catch (toggleError) {
-      setError(toggleError.message);
-    }
-  };
-
-  const getRewardValue = (offer) => Number(offer.winCoinsPerPublication ?? offer.winCoinsReward ?? 0);
-  const getTotalBudgetValue = (offer) => Number(offer.totalWinCoinsBudget ?? getRewardValue(offer));
-  const getRemainingBudgetValue = (offer) => Number(offer.remainingWinCoinsBudget ?? getTotalBudgetValue(offer));
-
-  const activeOffers = offers.filter((offer) => offer.isActive);
-  const averageRewardPerPublication = offers.length > 0
-    ? offers.reduce((sum, offer) => sum + getRewardValue(offer), 0) / offers.length
-    : 0;
-  const highestRewardPerPublication = offers.length > 0
-    ? Math.max(...offers.map((offer) => getRewardValue(offer)))
-    : 0;
-  const totalBudgetPublished = offers.reduce((sum, offer) => sum + getTotalBudgetValue(offer), 0);
-  const totalBudgetRemaining = offers.reduce((sum, offer) => sum + getRemainingBudgetValue(offer), 0);
-  const averageMinPrice = offers.length > 0
-    ? offers.reduce((sum, offer) => sum + Number(offer.minConsumption || 0), 0) / offers.length
-    : 0;
+  const activeOffers = offers.filter((o) => o.isActive);
+  const totalBudgetRemaining = offers.reduce((s, o) => s + Number(o.remainingWinCoinsBudget || 0), 0);
+  const totalBudgetPublished = offers.reduce((s, o) => s + Number(o.totalWinCoinsBudget || 0), 0);
+  const avgCashback = offers.length > 0 ? offers.reduce((s, o) => s + o.cashbackPercent, 0) / offers.length : 0;
+  const avgPrice = offers.length > 0 ? offers.reduce((s, o) => s + o.price, 0) / offers.length : 0;
 
   const metrics = [
-    {
-      title: 'Active Offers',
-      value: activeOffers.length.toString(),
-      icon: Megaphone,
-      trend: `${offers.length} total`,
-      trendDirection: 'up',
-      iconBg: 'bg-cyan-100 dark:bg-cyan-500/15 text-cyan-600 dark:text-cyan-400',
-    },
-    {
-      title: 'Offer Budget Remaining',
-      value: `${totalBudgetRemaining}`,
-      icon: Users,
-      trend: `Published: ${totalBudgetPublished}`,
-      trendDirection: 'neutral',
-      iconBg: 'bg-blue-100 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400',
-    },
-    {
-      title: 'Avg Reward / Publication',
-      value: `${averageRewardPerPublication.toFixed(0)}`,
-      icon: Coins,
-      trend: `Highest: ${highestRewardPerPublication}`,
-      trendDirection: 'up',
-      iconBg: 'bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400',
-    },
-    {
-      title: 'Average Min Price',
-      value: `${averageMinPrice.toFixed(0)}`,
-      icon: BarChart3,
-      trend: 'Per offer',
-      trendDirection: 'neutral',
-      iconBg: 'bg-purple-100 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400',
-    },
+    { title: 'Active Offers',    value: activeOffers.length.toString(),         icon: Megaphone, trend: `${offers.length} total`,                    trendDirection: 'up',      iconBg: 'bg-cyan-100 dark:bg-cyan-500/15 text-cyan-600 dark:text-cyan-400' },
+    { title: 'Budget Remaining', value: `${totalBudgetRemaining.toFixed(1)} WC`, icon: Coins,     trend: `Published: ${totalBudgetPublished.toFixed(1)}`, trendDirection: 'neutral', iconBg: 'bg-blue-100 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400' },
+    { title: 'Avg Cashback',     value: `${avgCashback.toFixed(0)}%`,            icon: BarChart3, trend: `Avg price: ${avgPrice.toFixed(0)} MAD`,     trendDirection: 'up',      iconBg: 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' },
   ];
 
-  return (
-    <DashboardLayout role="restaurant" user={user} navItems={navItems}>
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">
-          Overview
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
-          Create live offers, update rewards, and keep your offer board current.
-        </p>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24 gap-3 text-slate-500 dark:text-slate-400">
+        <Loader2 className="w-5 h-5 animate-spin" /> Loading dashboard…
       </div>
+    );
+  }
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {metrics.map((m) => (
-          <MetricCard key={m.title} {...m} />
+  return (
+    <>
+      {/* Page Header */}
+      <motion.div
+        className="mb-8"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+      >
+        <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">Overview</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">
+          Welcome back! Here's a snapshot of your cashback business.
+        </p>
+      </motion.div>
+
+      {/* ★ Hero Wallet Card — unique branded gradient */}
+      <motion.div
+        className="mb-8"
+        initial={{ opacity: 0, scale: 0.97 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.45, delay: 0.1 }}
+      >
+        <div className={`relative overflow-hidden rounded-3xl p-6 sm:p-8 shadow-2xl ${
+          walletBalance <= 0
+            ? 'bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 shadow-amber-500/25'
+            : 'bg-gradient-to-br from-[#0ea5e9] via-[#0284c7] to-[#1d4ed8] shadow-blue-500/25'
+        }`}>
+          {/* Decorative orbs */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/[0.06] rounded-full -translate-y-1/3 translate-x-1/4" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/[0.04] rounded-full translate-y-1/3 -translate-x-1/4" />
+          <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-amber-400/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl" />
+          
+          <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                {walletBalance <= 0 ? (
+                  <AlertTriangle className="w-4 h-4 text-amber-200" />
+                ) : (
+                  <Sparkles className="w-4 h-4 text-cyan-200" />
+                )}
+                <span className="text-sm font-semibold text-white/80 uppercase tracking-wider">
+                  {walletBalance <= 0 ? 'Wallet Empty' : 'Wallet Balance'}
+                </span>
+              </div>
+              <div className="flex items-baseline gap-3">
+                <span className="text-5xl sm:text-6xl font-black text-white tabular-nums">{walletBalance.toFixed(2)}</span>
+                <span className="text-2xl font-bold text-white/70">WC</span>
+              </div>
+              <p className="text-white/60 text-sm mt-2">
+                {walletBalance <= 0
+                  ? 'Top up to create offers and start earning'
+                  : `≈ ${(walletBalance * 10).toFixed(0)} MAD · Budget across offers: ${totalBudgetRemaining.toFixed(1)} WC`}
+              </p>
+            </div>
+            <Link
+              to="/restaurant-dashboard/wallet"
+              className="inline-flex items-center gap-2 rounded-2xl bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 px-5 py-3 text-sm font-bold text-white transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            >
+              <Wallet className="w-4 h-4" />
+              {walletBalance <= 0 ? 'Request Top-Up' : 'View Wallet'}
+              <ArrowUpRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        {metrics.map((m, i) => (
+          <motion.div
+            key={m.title}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.15 + i * 0.08 }}
+          >
+            <MetricCard {...m} />
+          </motion.div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        <section className="bg-white dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-700/50 shadow-sm p-6">
-          <div className="flex items-center justify-between gap-3 mb-6">
-            <div>
-              <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                <Plus className="w-5 h-5 text-cyan-500" />
-                {editingOfferId ? 'Edit offer' : 'Create offer'}
-              </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Set total budget and WinCoins reward per publication.
-              </p>
-            </div>
-            {editingOfferId && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-              >
-                Cancel edit
-              </button>
-            )}
-          </div>
-
-          {error && (
-            <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label className="block">
-                <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Establishment name</span>
-                <input
-                  value={form.establishmentName}
-                  onChange={(event) => setForm((current) => ({ ...current, establishmentName: event.target.value }))}
-                  required
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-4 py-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-cyan-500"
-                />
-              </label>
-
-              <label className="block">
-                <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category</span>
-                <select
-                  value={form.category}
-                  onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-4 py-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-cyan-500"
-                >
-                  <option value="Restaurant">Restaurant</option>
-                  <option value="Bar">Bar</option>
-                  <option value="Café">Café</option>
-                  <option value="Hotel">Hotel</option>
-                  <option value="Other">Other</option>
-                </select>
-              </label>
-            </div>
-
-            <label className="block">
-              <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</span>
-              <textarea
-                value={form.description}
-                onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
-                rows={4}
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-4 py-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-cyan-500 resize-none"
-              />
-            </label>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label className="block">
-                <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Min price</span>
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={form.minConsumption}
-                  onChange={(event) => setForm((current) => ({ ...current, minConsumption: event.target.value }))}
-                  required
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-4 py-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-cyan-500"
-                />
-              </label>
-
-              <label className="block">
-                <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">WinCoins per publication</span>
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={form.winCoinsPerPublication}
-                  onChange={(event) => setForm((current) => ({ ...current, winCoinsPerPublication: event.target.value }))}
-                  required
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-4 py-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-cyan-500"
-                />
-              </label>
-            </div>
-
-            <label className="block">
-              <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Total WinCoins budget for this offer</span>
-              <input
-                type="number"
-                min="1"
-                step="1"
-                value={form.totalWinCoinsBudget}
-                onChange={(event) => setForm((current) => ({ ...current, totalWinCoinsBudget: event.target.value }))}
-                required
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-4 py-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-cyan-500"
-              />
-            </label>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label className="block">
-                <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">City</span>
-                <input
-                  value={form.city}
-                  onChange={(event) => setForm((current) => ({ ...current, city: event.target.value }))}
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-4 py-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-cyan-500"
-                />
-              </label>
-
-              <label className="block">
-                <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address</span>
-                <input
-                  value={form.address}
-                  onChange={(event) => setForm((current) => ({ ...current, address: event.target.value }))}
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-4 py-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-cyan-500"
-                />
-              </label>
-            </div>
-
-            <button
-              type="submit"
-              disabled={savingOffer}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-3 font-bold text-white shadow-lg shadow-cyan-500/20 transition-all hover:from-cyan-600 hover:to-blue-600 disabled:opacity-70"
-            >
-              {savingOffer ? <Loader2 className="w-5 h-5 animate-spin" /> : editingOfferId ? 'Update offer' : 'Publish offer'}
-            </button>
-          </form>
-        </section>
-
-        <section className="bg-white dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-700/50 shadow-sm p-6">
-          <div className="flex items-center justify-between gap-3 mb-6">
-            <div>
-              <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                <Megaphone className="w-5 h-5 text-cyan-500" />
-                Your offers
-              </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Published offers are visible to influencers immediately.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={refreshOffers}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Refresh
-            </button>
-          </div>
-
-          {loadingOffers ? (
-            <div className="flex items-center justify-center py-12 text-slate-500 dark:text-slate-400 gap-2">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Loading offers
-            </div>
-          ) : offers.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 px-6 py-12 text-center text-slate-500 dark:text-slate-400">
-              No offers published yet. Create the first one to start collecting influencer posts.
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {offers.map((offer) => (
-                <OfferCard
-                  key={offer._id}
-                  offer={offer}
-                  showMerchantControls
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onToggleActive={handleToggleActive}
-                />
-              ))}
-            </div>
-          )}
-        </section>
+      {/* Quick Actions */}
+      <div className="mb-8">
+        <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <QuickAction
+            icon={Megaphone}
+            title="Manage Offers"
+            description={`${activeOffers.length} active · Create, edit, or generate QR codes`}
+            href="/restaurant-dashboard/offers"
+            gradient="bg-gradient-to-br from-cyan-500 to-blue-500"
+            delay={0.25}
+          />
+          <QuickAction
+            icon={Wallet}
+            title="Wallet & Transactions"
+            description="View balance, history, and request top-ups"
+            href="/restaurant-dashboard/wallet"
+            gradient="bg-gradient-to-br from-violet-500 to-fuchsia-500"
+            delay={0.33}
+          />
+          <QuickAction
+            icon={Settings}
+            title="Account Settings"
+            description="Update profile, password, and preferences"
+            href="/restaurant-dashboard/settings"
+            gradient="bg-gradient-to-br from-slate-600 to-slate-800 dark:from-slate-500 dark:to-slate-700"
+            delay={0.41}
+          />
+        </div>
       </div>
+
+      {/* Recent Active Offers preview */}
+      <motion.section
+        className="bg-white dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-700/50 shadow-sm p-6"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.45 }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+            <QrCode className="w-5 h-5 text-cyan-500" />
+            Active Offers
+          </h2>
+          <Link
+            to="/restaurant-dashboard/offers"
+            className="text-sm font-semibold text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1"
+          >
+            View all <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+        {activeOffers.length === 0 ? (
+          <div className="rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 px-6 py-12 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-cyan-100 dark:bg-cyan-500/15 flex items-center justify-center">
+              <Megaphone className="w-8 h-8 text-cyan-500 dark:text-cyan-400" />
+            </div>
+            <p className="text-slate-600 dark:text-slate-300 font-semibold mb-1">No offers yet</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500">Create your first cashback offer to start rewarding customers.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {activeOffers.slice(0, 3).map((offer, i) => (
+              <motion.div
+                key={offer._id}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: 0.5 + i * 0.06 }}
+                className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+              >
+                <div>
+                  <p className="font-semibold text-slate-800 dark:text-white text-sm">{offer.itemName}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{offer.establishmentName} · {offer.cashbackPercent}% cashback</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-cyan-600 dark:text-cyan-400">{offer.price} MAD</p>
+                  <p className="text-xs text-slate-500">{Number(offer.remainingWinCoinsBudget || 0).toFixed(1)} WC left</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </motion.section>
+    </>
+  );
+}
+
+/**
+ * RestaurantDashboard — the layout wrapper.
+ */
+export default function RestaurantDashboard() {
+  const { user } = useAuth();
+  const location = useLocation();
+  const isIndex = location.pathname === '/restaurant-dashboard';
+
+  return (
+    <DashboardLayout role="restaurant" user={user} navItems={navItems}>
+      {isIndex ? <OverviewContent /> : <Outlet />}
     </DashboardLayout>
   );
 }

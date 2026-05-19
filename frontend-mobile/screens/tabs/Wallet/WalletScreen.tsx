@@ -63,7 +63,7 @@ export default function WalletScreen() {
       >
         {/* Top bar */}
         <View style={styles.topBar}>
-          <Text style={[styles.brand, { color: colors.foreground }]}>Pub2Win</Text>
+          <Text style={[styles.brand, { color: colors.foreground }]}>WinSpot</Text>
           <View style={styles.topRight}>
             <Pressable
               style={[styles.iconBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
@@ -115,7 +115,7 @@ export default function WalletScreen() {
             </View>
 
             <Text style={[styles.balanceEur, { color: colors.success }]}>
-              ≈ {(balance * 0.65).toFixed(2)} €
+              ≈ {(balance * 10).toFixed(0)} MAD
             </Text>
 
             <View style={styles.actionRow}>

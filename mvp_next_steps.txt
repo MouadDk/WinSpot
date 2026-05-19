@@ -1,5 +1,5 @@
 ======================================================
-     PUB2WIN - MINIMUM VIABLE PRODUCT (MVP) PLAN
+     WINSPOT - MINIMUM VIABLE PRODUCT (MVP) PLAN
 ======================================================
 
 Maintenant que l'architecture Backend CRUD est en place, voici les étapes critiques pour finaliser le MVP (Minimum Viable Product) :

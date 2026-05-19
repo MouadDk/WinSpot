@@ -1,8 +1,4 @@
-import { Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { Environment, OrbitControls } from '@react-three/drei';
 import { motion } from 'framer-motion';
-import Logo3D from './Logo3D';
 
 export default function LoadingScreen({ message = "Loading..." }) {
   return (
@@ -12,23 +8,15 @@ export default function LoadingScreen({ message = "Loading..." }) {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/20 dark:bg-purple-600/20 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-cyan-400/20 dark:bg-cyan-500/20 rounded-full blur-[80px] pointer-events-none mix-blend-screen" />
 
-      {/* 3D Canvas */}
-      <div className="w-full h-64 sm:h-80 relative z-10">
-        <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
-          <ambientLight intensity={1.5} />
-          <directionalLight position={[10, 10, 5]} intensity={3} />
-          <pointLight position={[0, 0, 5]} intensity={2} />
-          <Suspense fallback={null}>
-            <Logo3D scale={1.2} />
-          </Suspense>
-          <OrbitControls 
-            enableZoom={false} 
-            enablePan={false}
-            autoRotate 
-            autoRotateSpeed={2}
-          />
-        </Canvas>
-      </div>
+      {/* Logo Image */}
+      <motion.img
+        src="/winspot-logo.png"
+        alt="WinSpot"
+        className="w-56 sm:w-72 relative z-10 object-contain"
+        style={{ filter: 'drop-shadow(0 12px 40px rgba(147,51,234,0.4))' }}
+        animate={{ y: [0, -10, 0], scale: [1, 1.03, 1] }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+      />
 
       {/* Loading Text */}
       <motion.div 

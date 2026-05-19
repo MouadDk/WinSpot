@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { UtensilsCrossed, Sparkles, ArrowLeft } from 'lucide-react';
+import { UtensilsCrossed, Wallet, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const RoleSelection = () => {
@@ -26,11 +26,17 @@ const RoleSelection = () => {
         animate={{ opacity: 1, y: 0 }}
         className="text-center z-10 mb-16"
       >
+        <img
+          src="/winspot-logo.png"
+          alt="WinSpot"
+          className="h-14 w-auto object-contain mx-auto mb-6"
+          style={{ filter: 'drop-shadow(0 4px 12px rgba(147,51,234,0.4))' }}
+        />
         <h1 className="text-4xl md:text-5xl font-black text-slate-800 dark:text-white mb-4 tracking-tight transition-colors duration-500">
           Choose Your Path
         </h1>
         <p className="text-slate-600 dark:text-slate-400 text-lg max-w-md mx-auto transition-colors duration-500">
-          Join the pub2WIN ecosystem as a venue seeking growth, or a creator seeking rewards.
+          Join WinSpot as a restaurant offering cashback, or as a customer earning rewards.
         </p>
       </motion.div>
 
@@ -59,7 +65,7 @@ const RoleSelection = () => {
             
             <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-4 relative z-10 transition-colors duration-500">For Restaurants</h2>
             <p className="text-slate-600 dark:text-slate-400 mb-10 leading-relaxed relative z-10 transition-colors duration-500">
-              Attract local influencers, generate authentic social media buzz, and boost your foot traffic with targeted WinCoins campaigns.
+              Create cashback offers for your menu items, generate QR codes for customers, and boost foot traffic with rewarding experiences.
             </p>
 
             <div className="mt-auto w-full space-y-3 relative z-10">
@@ -79,7 +85,7 @@ const RoleSelection = () => {
           </div>
         </motion.div>
 
-        {/* ── INFLUENCERS CARD ── */}
+        {/* ── CUSTOMERS CARD ── */}
         <motion.div 
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
@@ -97,23 +103,23 @@ const RoleSelection = () => {
                  style={{ background: 'radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 70%)' }} />
 
             <div className="w-20 h-20 mb-8 rounded-2xl bg-purple-50 dark:bg-gradient-to-br dark:from-purple-500/20 dark:to-pink-500/20 border border-purple-200 dark:border-purple-500/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 relative z-10">
-              <Sparkles className="w-10 h-10 text-purple-500 dark:text-purple-400" />
+              <Wallet className="w-10 h-10 text-purple-500 dark:text-purple-400" />
             </div>
             
-            <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-4 relative z-10 transition-colors duration-500">For Influencers</h2>
+            <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-4 relative z-10 transition-colors duration-500">For Customers</h2>
             <p className="text-slate-600 dark:text-slate-400 mb-10 leading-relaxed relative z-10 transition-colors duration-500">
-              Visit top-tier venues, share your authentic experiences on social media, and earn premium WinCoins cashback for every publication.
+              Eat at partner restaurants, scan QR codes after your meal, and earn cashback in WinCoins that you can withdraw as real money.
             </p>
 
             <div className="mt-auto w-full space-y-3 relative z-10">
               <Link
-                to="/influencer/login"
+                to="/customer/login"
                 className="block w-full py-4 rounded-xl bg-purple-600 text-white dark:bg-white dark:text-black font-bold text-lg hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] dark:hover:shadow-[0_0_30px_rgba(168,85,247,0.3)] transition-all"
               >
                 Log In
               </Link>
               <Link
-                to="/influencer/register"
+                to="/customer/register"
                 className="block w-full py-4 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white font-bold text-lg hover:bg-slate-50 dark:hover:bg-white/10 transition-colors"
               >
                 Create Account

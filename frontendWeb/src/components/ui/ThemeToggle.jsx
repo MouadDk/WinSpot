@@ -1,8 +1,14 @@
 import { Sun, Moon } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { useDarkMode } from '../../hooks/useDarkMode';
 
 export default function ThemeToggle() {
   const { isDark, toggle } = useDarkMode();
+  const location = useLocation();
+
+  if (location.pathname.includes('-dashboard')) {
+    return null;
+  }
 
   return (
     <button

@@ -5,6 +5,12 @@
 /* Class-based dark mode for Tailwind v4 */
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-slate-800: #12121c;
+  --color-slate-900: #0A0A0F;
+  --color-slate-950: #05050A;
+}
+
 /* Base styles */
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;

@@ -4,7 +4,7 @@ import AuthLayout from '../components/layout/AuthLayout';
 import { useAuth } from '../contexts/AuthContext';
 import { apiUrl } from '../lib/api';
 
-export default function InfluencerAuth({ isSignUp }) {
+export default function CustomerAuth({ isSignUp }) {
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -17,31 +17,36 @@ export default function InfluencerAuth({ isSignUp }) {
 
   const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-  // Google Sign-In Handler
+  /**
+   * SEC-2 FIX — Google Sign-In Handler
+   * ─────────────────────────────────────
+   * Previously: decoded the JWT client-side with atob() and sent plain-text
+   *   { email, firstName, googleId } — trivially forgeable by any attacker.
+   *
+   * Now: sends ONLY the raw `response.credential` string (the signed Google
+   *   ID token) to the backend.  The backend verifies it server-side via
+   *   google-auth-library's OAuth2Client.verifyIdToken() and extracts user
+   *   info ONLY from the verified payload.
+   *
+   * No client-side JWT decoding happens here anymore.
+   */
   const handleGoogleResponse = useCallback(async (response) => {
     setLoading(true);
     setError(null);
 
     try {
-      // Decode the JWT token
-      const decodedToken = JSON.parse(atob(response.credential.split('.')[1]));
-      
+      // Send the raw, signed Google credential token — the backend verifies it
       const res = await fetch(apiUrl('/api/auth/google'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: decodedToken.email,
-          firstName: decodedToken.given_name || '',
-          lastName: decodedToken.family_name || '',
-          googleId: decodedToken.sub
-        }),
+        body: JSON.stringify({ credential: response.credential }),
       });
 
       const data = await res.json();
       if (!data.success) throw new Error(data.message || 'Erreur lors de la connexion avec Google');
-      
+
       login(data.token, data.user);
-      window.location.href = '/influencer-dashboard';
+      window.location.href = '/customer-dashboard';
     } catch (err) {
       setError(err.message);
       setLoading(false);
@@ -88,12 +93,12 @@ export default function InfluencerAuth({ isSignUp }) {
             password,
             firstName,
             lastName,
-            role: 'influencer', // Automatically assign influencer role!
+            role: 'customer',
           }),
         });
         const data = await res.json();
-        if (!data.success) throw new Error(data.message || 'Erreur lors de l\'inscription');
-        
+        if (!data.success) throw new Error(data.message || "Erreur lors de l'inscription");
+
         // Auto-login after register
         const loginRes = await fetch(apiUrl('/api/auth/login'), {
           method: 'POST',
@@ -103,7 +108,7 @@ export default function InfluencerAuth({ isSignUp }) {
         const loginData = await loginRes.json();
         if (!loginData.success) throw new Error(loginData.message || 'Erreur lors de la connexion automatique');
         login(loginData.token, loginData.user);
-        window.location.href = '/influencer-dashboard';
+        window.location.href = '/customer-dashboard';
       } else {
         // Login API Call
         const res = await fetch(apiUrl('/api/auth/login'), {
@@ -114,7 +119,7 @@ export default function InfluencerAuth({ isSignUp }) {
         const data = await res.json();
         if (!data.success) throw new Error(data.message || 'Email ou mot de passe incorrect');
         login(data.token, data.user);
-        window.location.href = '/influencer-dashboard';
+        window.location.href = '/customer-dashboard';
       }
     } catch (err) {
       setError(err.message);
@@ -125,18 +130,18 @@ export default function InfluencerAuth({ isSignUp }) {
 
   return (
     <AuthLayout
-      brandTitle="Monetize Your Influence"
-      brandSubtitle="Discover exclusive local offers, visit premium spots, and earn WinCoins for your authentic content."
+      brandTitle="Earn Cashback Rewards"
+      brandSubtitle="Discover exclusive restaurant offers, scan QR codes after your meal, and earn WinCoins cashback on every visit."
       brandIcon={Sparkles}
       accentColor="purple"
       backLink="/choose-role"
     >
       <div className="bg-white dark:bg-slate-800/50 rounded-2xl shadow-xl dark:shadow-slate-900/50 p-8 border border-slate-100 dark:border-slate-700/50 max-w-md w-full mx-auto">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-          {isSignUp ? 'Créer un compte Influenceur' : 'Espace Influenceur'}
+          {isSignUp ? 'Créer un compte Client' : 'Espace Client'}
         </h2>
         <p className="text-slate-500 dark:text-slate-400 mb-6">
-          {isSignUp ? 'Rejoignez la communauté et gagnez des WinCoins.' : 'Connectez-vous pour découvrir de nouvelles missions.'}
+          {isSignUp ? 'Rejoignez WinSpot et gagnez du cashback.' : 'Connectez-vous pour voir vos récompenses.'}
         </p>
 
         {error && (
@@ -225,7 +230,7 @@ export default function InfluencerAuth({ isSignUp }) {
         <div className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
           {isSignUp ? 'Déjà un compte ?' : 'Pas encore de compte ?'}{' '}
           <a
-            href={isSignUp ? '/influencer/login' : '/influencer/register'}
+            href={isSignUp ? '/customer/login' : '/customer/register'}
             className="text-violet-500 hover:text-violet-400 font-semibold transition-colors"
           >
             {isSignUp ? 'Connectez-vous' : 'Inscrivez-vous'}

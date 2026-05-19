@@ -71,7 +71,7 @@ export default function RestaurantAuth({ isSignUp }) {
   return (
     <AuthLayout
       brandTitle="Boost Your Business"
-      brandSubtitle="Attract local influencers, generate authentic social media buzz, and turn posts into foot traffic with WinCoins."
+      brandSubtitle="Create cashback offers, generate QR codes for your customers, and reward diners with WinCoins after their meal."
       brandIcon={UtensilsCrossed}
       accentColor="cyan"
       backLink="/choose-role"
@@ -81,7 +81,7 @@ export default function RestaurantAuth({ isSignUp }) {
           {isSignUp ? 'Créer un compte Merchant' : 'Espace Merchant'}
         </h2>
         <p className="text-slate-500 dark:text-slate-400 mb-6">
-          {isSignUp ? 'Rejoignez la plateforme et créez votre première offre.' : 'Connectez-vous pour gérer vos offres et influenceurs.'}
+          {isSignUp ? 'Rejoignez la plateforme et créez votre première offre.' : 'Connectez-vous pour gérer vos offres et cashback.'}
         </p>
 
         {error && (

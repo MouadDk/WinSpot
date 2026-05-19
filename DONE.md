@@ -1,4 +1,4 @@
-# 🏆 Rapport de Réalisation : Migration JWT & Admin Dashboard (Pub2Win)
+# 🏆 Rapport de Réalisation : Migration JWT & Admin Dashboard (WinSpot)
 
 Ce document résume l'ensemble des travaux majeurs accomplis durant notre session. Nous sommes passés d'un système dépendant d'un service externe payant (Clerk) à une infrastructure 100% propriétaire, sécurisée et sur-mesure.
 
@@ -128,11 +128,11 @@ C'est le système central (Online-To-Offline) de validation des visites et du co
   * **Génération Frontend** : Quand l'influenceur accepte une mission, l'application génère un QR Code unique (`userId` + `missionId`).
   * **Scan App Merchant** : Le restaurateur scanne ce code pour prouver que l'influenceur est bien venu physiquement.
 * **🤖 La validation IA de la Story (En ligne - Instagram Graph API)** :
-  * **Connexion** : L'influenceur connecte son compte Instagram (Créateur/Business) à Pub2Win via Facebook Login.
+  * **Connexion** : L'influenceur connecte son compte Instagram (Créateur/Business) à WinSpot via Facebook Login.
   * **Analyse NLP / Vision** : Dès qu'une story est postée, notre API la récupère et l'envoie à une IA (ex: GPT-4 Vision) pour vérifier le contexte (ex: "est-ce qu'on voit bien le burger du restaurant X ?").
   * **Le Check des 24h** : Un *Cron Job* (tâche automatisée sur le serveur) se réveille 23h55 après le post pour interroger l'API Instagram. Si la story est toujours là, la mission est validée et les WinCoins sont transférés ! Sinon, la mission échoue.
 
 ### 🟢 Phase 4 : L'Application Mobile React Native
-L'application `frontendMobile` de Pub2Win contient encore les anciennes traces d'authentification.
+L'application `frontendMobile` de WinSpot contient encore les anciennes traces d'authentification.
 * **Refonte de l'Auth Mobile** : Remplacer l'ancienne logique (Clerk/Mocks) par des appels réseau classiques à notre `/api/auth/login` et stocker le JWT dans `expo-secure-store`.
 * **Synchronisation** : Connecter l'application mobile pour qu'elle consomme les mêmes API de base (affichage de la carte, des offres, et scan QR Code) que le Web.

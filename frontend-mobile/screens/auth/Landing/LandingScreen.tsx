@@ -71,7 +71,7 @@ export default function LandingScreen() {
     <View style={[localStyles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.contentWrapper}>
-          <Text style={[styles.appTitle, { color: colors.foreground }]}>Pub2Win</Text>
+          <Text style={[styles.appTitle, { color: colors.foreground }]}>WinSpot</Text>
 
           <View style={styles.heroVisualContainer}>
             <View style={[styles.ambientBackgroundCircle, styles.circleLarge, { borderColor: colors.border, opacity: 0.2 }]} />

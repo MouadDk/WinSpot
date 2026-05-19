@@ -67,7 +67,7 @@ export default function IndexScreen() {
       >
         {/* Top bar */}
         <View style={styles.topBar}>
-          <Text style={[styles.brand, { color: colors.foreground }]}>Pub2Win</Text>
+          <Text style={[styles.brand, { color: colors.foreground }]}>WinSpot</Text>
           <View style={styles.topRight}>
             <Pressable
               onPress={() => {}}
@@ -96,7 +96,7 @@ export default function IndexScreen() {
             kind="wincoins"
             label="WinCoins"
             value={String(balance ?? 0)}
-            hint={`${((balance ?? 0) * 0.65).toFixed(2)} €`}
+            hint={`${((balance ?? 0) * 10).toFixed(0)} MAD`}
           />
           <StatCard
             kind="missions"

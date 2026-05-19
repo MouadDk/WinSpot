@@ -1,4 +1,4 @@
-import { MapPin, Coins, Pencil, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { MapPin, Coins, Pencil, Trash2, ToggleLeft, ToggleRight, QrCode } from 'lucide-react';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -13,34 +13,40 @@ export default function OfferCard({
   onEdit,
   onDelete,
   onToggleActive,
-  onView,
+  onGenerateQR,
   showMerchantControls = false,
 }) {
   const locationParts = [offer?.location?.city, offer?.location?.address].filter(Boolean);
   const locationLabel = locationParts.length > 0 ? locationParts.join(' • ') : 'Location not set';
-  const rewardPerPublication = offer.winCoinsPerPublication ?? offer.winCoinsReward;
-  const totalBudget = offer.totalWinCoinsBudget ?? rewardPerPublication;
+  const cashbackMAD = (offer.price * offer.cashbackPercent / 100).toFixed(0);
+  const cashbackCoins = (offer.price * offer.cashbackPercent / 100 / 10).toFixed(1);
+  const totalBudget = offer.totalWinCoinsBudget ?? 0;
   const remainingBudget = offer.remainingWinCoinsBudget ?? totalBudget;
 
   return (
     <Card hover className="h-full flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="flex flex-wrap items-center gap-2 mb-2">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
             <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-              {offer.establishmentName}
+              {offer.itemName}
             </h3>
             <Badge variant={offer.isActive ? 'success' : 'neutral'} dot={offer.isActive}>
               {offer.isActive ? 'Active' : 'Paused'}
             </Badge>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {offer.category}
+            {offer.establishmentName} • {offer.category}
           </p>
         </div>
-        <div className="flex items-center gap-1.5 rounded-full bg-amber-400/15 text-amber-600 dark:text-amber-400 px-3 py-1.5 text-sm font-bold">
-          <Coins className="w-4 h-4" />
-          {rewardPerPublication} WinCoins / publication
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex items-center gap-1.5 rounded-full bg-emerald-400/15 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 text-sm font-bold">
+            <Coins className="w-4 h-4" />
+            {offer.cashbackPercent}% cashback
+          </div>
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            {cashbackMAD} MAD ({cashbackCoins} WC)
+          </span>
         </div>
       </div>
 
@@ -53,10 +59,10 @@ export default function OfferCard({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
         <div className="rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/50 p-3">
           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
-            Min price
+            Price
           </p>
           <p className="font-semibold text-slate-800 dark:text-white">
-            {formatMoney(offer.minConsumption)}
+            {formatMoney(offer.price)} MAD
           </p>
         </div>
         <div className="rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/50 p-3">
@@ -89,6 +95,11 @@ export default function OfferCard({
       <div className="mt-auto flex flex-wrap gap-2 pt-1">
         {showMerchantControls ? (
           <>
+            {offer.isActive && (
+              <Button variant="primary" size="sm" icon={QrCode} onClick={() => onGenerateQR?.(offer)}>
+                Generate QR
+              </Button>
+            )}
             <Button variant="secondary" size="sm" icon={Pencil} onClick={() => onEdit?.(offer)}>
               Edit
             </Button>
@@ -105,9 +116,9 @@ export default function OfferCard({
             </Button>
           </>
         ) : (
-          <Button variant="primary" size="sm" fullWidth onClick={() => onView?.(offer)}>
-            View offer
-          </Button>
+          <div className="w-full text-center text-sm text-emerald-600 dark:text-emerald-400 font-semibold">
+            Scan QR at restaurant to claim
+          </div>
         )}
       </div>
     </Card>

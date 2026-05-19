@@ -120,7 +120,7 @@ export default function SignInScreen() {
               <Feather name="arrow-left" size={18} color={colors.foreground} />
             </Pressable>
             <View style={styles.brandRow}>
-              <Text style={[styles.brand, { color: colors.foreground }]}>Pub2Win</Text>
+              <Text style={[styles.brand, { color: colors.foreground }]}>WinSpot</Text>
             </View>
             <View style={{ width: 40 }} />
           </View>

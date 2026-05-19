@@ -61,7 +61,7 @@ export default function ExploreScreen() {
       >
         {/* Top bar */}
         <View style={styles.topBar}>
-          <Text style={[styles.brand, { color: colors.foreground }]}>Pub2Win</Text>
+          <Text style={[styles.brand, { color: colors.foreground }]}>WinSpot</Text>
           <View style={styles.topRight}>
             <Pressable
               style={[styles.iconBtn, { backgroundColor: colors.card, borderColor: colors.border }]}

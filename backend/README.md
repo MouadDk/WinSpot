@@ -1,6 +1,6 @@
-# Pub2Win Backend API
+# WinSpot Backend API
 
-Backend Node.js/Express pour la plateforme Pub2Win — un système de cashback (WinCoins) connectant des **Merchants** (restaurants, bars, boutiques…) avec des **Influenceurs**.
+Backend Node.js/Express pour la plateforme WinSpot — un système de cashback (WinCoins) connectant des **Merchants** (restaurants, bars, boutiques…) avec des **Influenceurs**.
 
 ---
 
@@ -54,7 +54,7 @@ Crée un fichier `.env` à la racine de `backend/` :
 
 ```env
 PORT=4000
-MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/pub2win
+MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/WinSpot
 CLERK_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxx
 CLERK_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxxxxx
 CLERK_SECRET_KEY=sk_test_xxxxxxxxxxxxxxxx
@@ -461,7 +461,7 @@ GET    /api/users/:id           → Profil public d'un user
 | | unsafeMetadata | publicMetadata |
 |---|---|---|
 | **Qui peut modifier** | Le frontend (côté client) | Seulement le backend ou Clerk Dashboard |
-| **Usage dans Pub2Win** | Stocker le `role` au signup | Stocker la `category` du merchant |
+| **Usage dans WinSpot** | Stocker le `role` au signup | Stocker la `category` du merchant |
 | **Sécurité** | ⚠️ L'utilisateur peut le modifier | ✅ Sécurisé |
 | **Accès** | `sessionClaims.unsafe_metadata` | `public_metadata` (webhook) |
 

@@ -1,6 +1,6 @@
-# 🗺️ Pub2Win - Architecture & User Flow Diagrams
+# 🗺️ WinSpot - Architecture & User Flow Diagrams
 
-Ce document illustre les différents parcours utilisateurs (Flows) et l'architecture technique de la plateforme Pub2Win après la migration vers un système 100% propriétaire (JWT) et l'ajout de l'Intelligence Artificielle.
+Ce document illustre les différents parcours utilisateurs (Flows) et l'architecture technique de la plateforme WinSpot après la migration vers un système 100% propriétaire (JWT) et l'ajout de l'Intelligence Artificielle.
 
 ---
 
@@ -9,7 +9,7 @@ Ce document illustre les différents parcours utilisateurs (Flows) et l'architec
 ```text
                                     ┌─────────────────────────┐
                                     │   LANDING PAGE (/)      │
-                                    │  "Welcome to Pub2Win"   │
+                                    │  "Welcome to WinSpot"   │
                                     └────────────┬────────────┘
                                                  │
                         ┌────────────────────────┼────────────────────────┐
@@ -167,7 +167,7 @@ main.jsx
                                     │
                                     ▼
 ┌────────────────────────────────────────────────────────┐
-│ BACKEND PUB2WIN                                        │
+│ BACKEND WINSPOT                                        │
 │ - Récupère l'image de la Story via l'API Instagram     │
 │ - Envoie l'image à l'IA (Vision/NLP)                   │
 │ - IA check : "Présence du produit ?" "Cadre luxueux ?" │

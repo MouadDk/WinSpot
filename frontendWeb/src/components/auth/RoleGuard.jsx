@@ -19,8 +19,8 @@ export default function RoleGuard({ allowedRole, children }) {
   // If the user's role does not match the allowed role for this dashboard
   if (userRole && userRole !== allowedRole) {
     // Redirect them to their actual dashboard
-    if (userRole === 'influencer') {
-      return <Navigate to="/influencer-dashboard" replace />;
+    if (userRole === 'customer') {
+      return <Navigate to="/customer-dashboard" replace />;
     } else if (userRole === 'merchant') {
       return <Navigate to="/restaurant-dashboard" replace />;
     }

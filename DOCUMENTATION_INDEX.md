@@ -43,7 +43,7 @@
 ## 📁 Files Structure
 
 ```
-Pub2Win/
+WinSpot/
 ├─ 📄 DELIVERY_SUMMARY.md           ← Project overview
 ├─ 📄 QUICK_REFERENCE.md            ← 3-minute setup guide
 ├─ 📄 FRONTEND_SETUP_GUIDE.md       ← Complete guide with troubleshooting
@@ -287,7 +287,7 @@ You have **6 comprehensive documentation files** covering:
 
 **Next Step**: Open [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) and follow the setup checklist!
 
-Your complete P2B/pub2WIN frontend is ready. Let's go! 🎉
+Your complete P2B/WinSpot frontend is ready. Let's go! 🎉
 
 ---
 

@@ -1,4 +1,4 @@
-# Pub2Win
+# WinSpot
 
 Monorepo starter for:
 
@@ -32,4 +32,4 @@ This mobile setup stays in managed Expo, so no `android` or `ios` folders need t
 - `frontend/.env.example` sets the web client backend URL.
 - `mobile/.env.example` sets the Expo public backend URL for future API calls.
 
-# Pub2Win
+# WinSpot
