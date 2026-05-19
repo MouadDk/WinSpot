@@ -1,15 +1,71 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Sparkles, Loader2, ArrowRight } from 'lucide-react';
-import AuthLayout from '../components/layout/AuthLayout';
+import { Link } from 'react-router-dom';
+import {
+  Loader2, ArrowRight, ArrowLeft,
+  Mail, Lock, User, Eye, EyeOff, AlertCircle,
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { apiUrl } from '../lib/api';
+import {
+  CashbackIcon, RewardIcon, CoinStackIcon, ShieldLockIcon, BoltIcon,
+} from '../components/ui/AnimatedIcons';
+
+/* ─── Animation Presets (matching RoleSelection) ─── */
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: (delay = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] },
+  }),
+};
+
+const PERKS = [
+  { Icon: RewardIcon, text: 'Cashback on every restaurant visit' },
+  { Icon: CoinStackIcon, text: 'WinCoins wallet with real MAD withdrawals' },
+  { Icon: ShieldLockIcon, text: 'Secure & verified transactions' },
+  { Icon: BoltIcon, text: 'Instant rewards — no waiting' },
+];
+
+/* ─── Reusable Input Field ─── */
+function FormInput({ icon: Icon, label, type = 'text', ...rest }) {
+  const [show, setShow] = useState(false);
+  const isPassword = type === 'password';
+
+  return (
+    <div>
+      <label className="block text-[13px] font-semibold text-slate-600 dark:text-slate-300 mb-1.5 ml-0.5">
+        {label}
+      </label>
+      <div className="relative group">
+        <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-400 dark:text-slate-500 group-focus-within:text-purple-500 transition-colors duration-200" />
+        <input
+          type={isPassword ? (show ? 'text' : 'password') : type}
+          className="w-full pl-11 pr-11 py-3 bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500/50 transition-all duration-200"
+          {...rest}
+        />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShow(!show)}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer p-0.5"
+            tabIndex={-1}
+            aria-label={show ? 'Hide password' : 'Show password'}
+          >
+            {show ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function CustomerAuth({ isSignUp }) {
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Form State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -35,7 +91,6 @@ export default function CustomerAuth({ isSignUp }) {
     setError(null);
 
     try {
-      // Send the raw, signed Google credential token — the backend verifies it
       const res = await fetch(apiUrl('/api/auth/google'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -43,7 +98,7 @@ export default function CustomerAuth({ isSignUp }) {
       });
 
       const data = await res.json();
-      if (!data.success) throw new Error(data.message || 'Erreur lors de la connexion avec Google');
+      if (!data.success) throw new Error(data.message || 'Google sign-in failed');
 
       login(data.token, data.user);
       window.location.href = '/customer-dashboard';
@@ -54,27 +109,25 @@ export default function CustomerAuth({ isSignUp }) {
   }, [login]);
 
   useEffect(() => {
-    // Initialize Google Sign-In
-    if (!GOOGLE_CLIENT_ID || !window.google?.accounts?.id) {
-      return;
-    }
+    if (!GOOGLE_CLIENT_ID || !window.google?.accounts?.id) return;
 
     window.google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
       callback: handleGoogleResponse,
     });
 
-    window.google.accounts.id.renderButton(
-      document.getElementById('google-button'),
-      {
+    const el = document.getElementById('google-signin-btn');
+    if (el) {
+      window.google.accounts.id.renderButton(el, {
         type: 'standard',
         size: 'large',
-        width: '310',
+        width: '360',
         theme: 'outline',
-        locale: 'fr',
+        locale: 'en',
         text: isSignUp ? 'signup_with' : 'signin_with',
-      }
-    );
+        shape: 'pill',
+      });
+    }
   }, [GOOGLE_CLIENT_ID, isSignUp, handleGoogleResponse]);
 
   const handleSubmit = async (e) => {
@@ -84,40 +137,31 @@ export default function CustomerAuth({ isSignUp }) {
 
     try {
       if (isSignUp) {
-        // Register API Call
         const res = await fetch(apiUrl('/api/auth/register'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email,
-            password,
-            firstName,
-            lastName,
-            role: 'customer',
-          }),
+          body: JSON.stringify({ email, password, firstName, lastName, role: 'customer' }),
         });
         const data = await res.json();
-        if (!data.success) throw new Error(data.message || "Erreur lors de l'inscription");
+        if (!data.success) throw new Error(data.message || 'Registration failed');
 
-        // Auto-login after register
         const loginRes = await fetch(apiUrl('/api/auth/login'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),
         });
         const loginData = await loginRes.json();
-        if (!loginData.success) throw new Error(loginData.message || 'Erreur lors de la connexion automatique');
+        if (!loginData.success) throw new Error(loginData.message || 'Auto-login failed');
         login(loginData.token, loginData.user);
         window.location.href = '/customer-dashboard';
       } else {
-        // Login API Call
         const res = await fetch(apiUrl('/api/auth/login'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),
         });
         const data = await res.json();
-        if (!data.success) throw new Error(data.message || 'Email ou mot de passe incorrect');
+        if (!data.success) throw new Error(data.message || 'Invalid email or password');
         login(data.token, data.user);
         window.location.href = '/customer-dashboard';
       }
@@ -129,114 +173,237 @@ export default function CustomerAuth({ isSignUp }) {
   };
 
   return (
-    <AuthLayout
-      brandTitle="Earn Cashback Rewards"
-      brandSubtitle="Discover exclusive restaurant offers, scan QR codes after your meal, and earn WinCoins cashback on every visit."
-      brandIcon={Sparkles}
-      accentColor="purple"
-      backLink="/choose-role"
-    >
-      <div className="bg-white dark:bg-slate-800/50 rounded-2xl shadow-xl dark:shadow-slate-900/50 p-8 border border-slate-100 dark:border-slate-700/50 max-w-md w-full mx-auto">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-          {isSignUp ? 'Créer un compte Client' : 'Espace Client'}
-        </h2>
-        <p className="text-slate-500 dark:text-slate-400 mb-6">
-          {isSignUp ? 'Rejoignez WinSpot et gagnez du cashback.' : 'Connectez-vous pour voir vos récompenses.'}
-        </p>
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0A0A0F] flex items-center justify-center px-4 sm:px-6 py-10 relative overflow-hidden transition-colors duration-500">
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 dark:bg-red-500/20 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 rounded-lg text-sm">
-            {error}
-          </div>
-        )}
+      {/* ── Ambient background glows (same as RoleSelection) ── */}
+      <div className="absolute top-1/4 right-1/4 w-[800px] h-[800px] pointer-events-none mix-blend-screen opacity-40 dark:opacity-80 will-change-transform"
+           style={{ background: 'radial-gradient(circle, rgba(147,51,234,0.15) 0%, transparent 60%)' }} />
+      <div className="absolute bottom-1/4 left-1/4 w-[800px] h-[800px] pointer-events-none mix-blend-screen opacity-40 dark:opacity-80 will-change-transform"
+           style={{ background: 'radial-gradient(circle, rgba(219,39,119,0.1) 0%, transparent 60%)' }} />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {isSignUp && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Prénom</label>
-                <input
-                  type="text"
-                  required
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-violet-500 dark:text-white outline-none transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nom</label>
-                <input
-                  type="text"
-                  required
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-violet-500 dark:text-white outline-none transition-all"
-                />
-              </div>
-            </div>
-          )}
+      {/* ── Back button ── */}
+      <Link
+        to="/choose-role"
+        className="absolute top-6 left-6 sm:top-8 sm:left-8 flex items-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors z-20 group cursor-pointer"
+      >
+        <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
+        <span className="text-sm font-medium hidden sm:inline">Back</span>
+      </Link>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-violet-500 dark:text-white outline-none transition-all"
+      {/* ── Main Card ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        className="relative z-10 w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-0"
+      >
+        {/* ── Left: Info panel ── */}
+        <div className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-purple-700 via-fuchsia-600 to-purple-900 rounded-l-[1.75rem] p-10 relative overflow-hidden">
+          {/* Decorative orbs */}
+          <motion.div
+            className="absolute top-[-60px] left-[-60px] w-60 h-60 bg-white/10 rounded-full blur-2xl"
+            animate={{ scale: [1, 1.15, 1] }}
+            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <motion.div
+            className="absolute bottom-[-40px] right-[-40px] w-48 h-48 bg-fuchsia-300/10 rounded-full blur-2xl"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+          />
+          <div className="absolute inset-0 opacity-[0.04]"
+            style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }}
+          />
+
+          <div className="relative z-10">
+            <motion.img
+              src="/winspot-logo.png"
+              alt="WinSpot"
+              className="h-10 w-auto object-contain mb-10 brightness-0 invert opacity-80"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.8 }}
+              transition={{ delay: 0.2 }}
             />
+
+            <motion.div
+              className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20 mb-6 shadow-xl"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
+            >
+              <CashbackIcon className="w-8 h-8" color="white" />
+            </motion.div>
+
+            <motion.h2
+              className="text-3xl font-extrabold text-white mb-3 tracking-tight"
+              style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+            >
+              Earn Cashback Rewards
+            </motion.h2>
+            <motion.p
+              className="text-purple-100/80 leading-relaxed text-[15px] mb-10"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              Scan QR codes after dining and get instant WinCoins you can withdraw as real money.
+            </motion.p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mot de passe</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-violet-500 dark:text-white outline-none transition-all"
-            />
+          {/* Feature list */}
+          <div className="relative z-10 space-y-3">
+            {PERKS.map((perk, i) => (
+              <motion.div
+                key={perk.text}
+                className="flex items-center gap-3 text-white/80"
+                initial={{ opacity: 0, x: -16 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 + i * 0.1, duration: 0.4 }}
+              >
+                <div className="w-8 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center shrink-0 border border-white/10">
+                  <perk.Icon className="w-4 h-4" color="currentColor" />
+                </div>
+                <span className="text-sm font-medium">{perk.text}</span>
+              </motion.div>
+            ))}
           </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-6 bg-gradient-to-r from-violet-500 to-fuchsia-400 hover:from-violet-600 hover:to-fuchsia-500 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-all disabled:opacity-70"
-          >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <>
-                {isSignUp ? 'Créer mon compte' : 'Se connecter'}
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </>
-            )}
-          </button>
-
-          <div className="mt-4">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-300 dark:border-slate-600"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white dark:bg-slate-800/50 text-slate-500 dark:text-slate-400">Ou continuez avec</span>
-              </div>
-            </div>
-
-            <div className="mt-4" id="google-button"></div>
-          </div>
-        </form>
-
-        <div className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
-          {isSignUp ? 'Déjà un compte ?' : 'Pas encore de compte ?'}{' '}
-          <a
-            href={isSignUp ? '/customer/login' : '/customer/register'}
-            className="text-violet-500 hover:text-violet-400 font-semibold transition-colors"
-          >
-            {isSignUp ? 'Connectez-vous' : 'Inscrivez-vous'}
-          </a>
         </div>
-      </div>
-    </AuthLayout>
+
+        {/* ── Right: Form panel ── */}
+        <div className="bg-white dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/80 dark:border-slate-700/50 rounded-[1.75rem] lg:rounded-l-none lg:rounded-r-[1.75rem] shadow-xl shadow-slate-200/40 dark:shadow-black/20 p-7 sm:p-9 flex flex-col justify-center">
+
+          {/* Mobile logo + icon (visible < lg) */}
+          <div className="lg:hidden flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+              <CashbackIcon className="w-5 h-5" color="white" />
+            </div>
+            <img src="/winspot-logo.png" alt="WinSpot" className="h-8 w-auto object-contain" style={{ filter: 'drop-shadow(0 2px 6px rgba(147,51,234,0.3))' }} />
+          </div>
+
+          {/* Heading */}
+          <motion.div initial="hidden" animate="visible" className="mb-6">
+            <motion.h1
+              variants={fadeUp}
+              custom={0.05}
+              className="text-2xl sm:text-[1.7rem] font-bold text-slate-900 dark:text-white tracking-tight"
+              style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}
+            >
+              {isSignUp ? 'Create your account' : 'Welcome back'}
+            </motion.h1>
+            <motion.p variants={fadeUp} custom={0.1} className="text-slate-500 dark:text-slate-400 text-sm mt-1.5">
+              {isSignUp ? 'Join WinSpot and start earning cashback.' : 'Sign in to view your rewards and wallet.'}
+            </motion.p>
+          </motion.div>
+
+          {/* Error */}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -8, scaleY: 0.95 }}
+                animate={{ opacity: 1, y: 0, scaleY: 1 }}
+                exit={{ opacity: 0, y: -8, scaleY: 0.95 }}
+                className="mb-5 origin-top"
+              >
+                <div className="flex items-start gap-2.5 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl">
+                  <AlertCircle className="w-4.5 h-4.5 text-red-500 shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-700 dark:text-red-300 font-medium leading-snug">{error}</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Form */}
+          <motion.form
+            onSubmit={handleSubmit}
+            className="space-y-4"
+            initial="hidden"
+            animate="visible"
+          >
+            {isSignUp && (
+              <motion.div variants={fadeUp} custom={0.14} className="grid grid-cols-2 gap-3">
+                <FormInput icon={User} label="First name" required value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Jane" />
+                <FormInput icon={User} label="Last name" required value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Doe" />
+              </motion.div>
+            )}
+
+            <motion.div variants={fadeUp} custom={isSignUp ? 0.18 : 0.14}>
+              <FormInput icon={Mail} label="Email" type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" />
+            </motion.div>
+
+            <motion.div variants={fadeUp} custom={isSignUp ? 0.22 : 0.18}>
+              <FormInput icon={Lock} label="Password" type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
+            </motion.div>
+
+            {/* Submit */}
+            <motion.div variants={fadeUp} custom={isSignUp ? 0.26 : 0.22} className="pt-1">
+              <button
+                type="submit"
+                disabled={loading}
+                className="group/btn w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-bold text-[15px] cursor-pointer
+                  bg-gradient-to-r from-purple-600 to-fuchsia-500 hover:from-purple-700 hover:to-fuchsia-600
+                  dark:from-white dark:to-slate-100 dark:text-slate-900 dark:hover:from-slate-100 dark:hover:to-white
+                  text-white shadow-lg shadow-purple-500/25 dark:shadow-white/10
+                  hover:shadow-xl active:scale-[0.97] transition-all duration-200
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-500"
+              >
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    {isSignUp ? 'Create Account' : 'Sign In'}
+                    <ArrowRight className="w-4.5 h-4.5 group-hover/btn:translate-x-1 transition-transform duration-200" />
+                  </>
+                )}
+              </button>
+            </motion.div>
+
+            {/* Divider + Google */}
+            <motion.div variants={fadeUp} custom={isSignUp ? 0.3 : 0.26} className="pt-1">
+              <div className="relative my-1">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200 dark:border-slate-700/80" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="px-3 bg-white dark:bg-slate-900/60 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    or
+                  </span>
+                </div>
+              </div>
+              <div className="mt-4 flex justify-center" id="google-signin-btn" />
+            </motion.div>
+          </motion.form>
+
+          {/* Switch link */}
+          <motion.p
+            variants={fadeUp}
+            custom={isSignUp ? 0.36 : 0.32}
+            initial="hidden"
+            animate="visible"
+            className="text-center text-sm text-slate-500 dark:text-slate-400 mt-7"
+          >
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+            <Link
+              to={isSignUp ? '/customer/login' : '/customer/register'}
+              className="text-purple-600 dark:text-purple-400 hover:text-purple-500 font-semibold transition-colors cursor-pointer"
+            >
+              {isSignUp ? 'Sign in' : 'Create one'}
+            </Link>
+          </motion.p>
+        </div>
+      </motion.div>
+
+      {/* Footer */}
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.9 }}
+        className="absolute bottom-6 text-xs text-slate-400 dark:text-slate-600 z-10"
+      >
+        By continuing, you agree to WinSpot's Terms of Service and Privacy Policy.
+      </motion.p>
+    </div>
   );
 }

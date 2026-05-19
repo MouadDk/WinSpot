@@ -1,4 +1,5 @@
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { motion } from 'framer-motion';
 import Card from '../ui/Card';
 
 const trendConfig = {
@@ -26,25 +27,28 @@ export default function MetricCard({
   trend,
   trendDirection = 'neutral',
   iconBg = 'bg-purple-100 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400',
+  variant = 'glass',
 }) {
   const trendStyle = trendConfig[trendDirection] || trendConfig.neutral;
   const TrendIcon = trendStyle.Icon;
 
   return (
-    <Card hover>
+    <Card hover variant={variant}>
       <div className="flex items-start justify-between mb-4">
         <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
           {title}
         </h3>
         {Icon && (
           <div
-            className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBg}`}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBg} transition-transform duration-300`}
           >
             <Icon className="w-5 h-5" />
           </div>
         )}
       </div>
-      <p className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">
+      <p className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight font-[var(--font-display)]"
+         style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}
+      >
         {value}
       </p>
       {trend && (

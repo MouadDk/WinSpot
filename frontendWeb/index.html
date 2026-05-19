@@ -4,11 +4,68 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontendweb</title>
+    <meta name="description" content="WinSpot - Dine, Scan & Earn Cashback. The Moroccan platform connecting restaurants with customers through AI-verified social media cashback rewards." />
+    <meta name="theme-color" content="#7c3aed" />
+    <title>WinSpot — Dine, Scan & Earn Cashback</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <style>
+        /* Initial Loading Skeleton */
+        .winspot-initial-loader {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+          width: 100vw;
+          background-color: #0A0A0F;
+          font-family: system-ui, -apple-system, sans-serif;
+        }
+        .winspot-logo-pulse {
+          width: 120px;
+          height: auto;
+          margin-bottom: 40px;
+          animation: winspot-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+          filter: drop-shadow(0 4px 16px rgba(147, 51, 234, 0.3));
+        }
+        .winspot-skeleton-block {
+          background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+          background-size: 200% 100%;
+          animation: winspot-shimmer 1.5s infinite;
+          border-radius: 12px;
+        }
+        .ws-sk-title { width: 300px; height: 36px; margin-bottom: 16px; border-radius: 8px; }
+        .ws-sk-text { width: 450px; height: 16px; margin-bottom: 8px; border-radius: 4px; max-width: 80%; }
+        .ws-sk-text-short { width: 300px; height: 16px; margin-bottom: 40px; border-radius: 4px; max-width: 60%; }
+        .ws-sk-cards { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; max-width: 900px; width: 100%; padding: 0 20px; box-sizing: border-box; }
+        .ws-sk-card { flex: 1; min-width: 250px; max-width: 350px; height: 180px; border-radius: 24px; }
+
+        @keyframes winspot-shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+        @keyframes winspot-pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.7; transform: scale(0.95); }
+        }
+        @media (prefers-color-scheme: light) {
+          .winspot-initial-loader { background-color: #f8fafc; }
+          .winspot-skeleton-block { background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); }
+        }
+      </style>
+      <div class="winspot-initial-loader">
+        <img src="/winspot-logo.png" alt="Loading WinSpot..." class="winspot-logo-pulse" />
+        <div class="winspot-skeleton-block ws-sk-title"></div>
+        <div class="winspot-skeleton-block ws-sk-text"></div>
+        <div class="winspot-skeleton-block ws-sk-text-short"></div>
+        <div class="ws-sk-cards">
+          <div class="winspot-skeleton-block ws-sk-card"></div>
+          <div class="winspot-skeleton-block ws-sk-card"></div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

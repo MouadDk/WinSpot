@@ -9,6 +9,8 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import MetricCard from '../components/dashboard/MetricCard';
+import EngagementChart from '../components/dashboard/EngagementChart';
+import { SkeletonDashboard } from '../components/ui/SkeletonLoader';
 import { apiUrl, authHeaders, parseApiResponse } from '../lib/api';
 
 // ─── Navigation Items (all wired to real routes) ────────────────────────────
@@ -19,7 +21,7 @@ const navItems = [
   { label: 'Settings', icon: Settings,         href: '/restaurant-dashboard/settings' },
 ];
 
-// ─── Animated quick-action card ─────────────────────────────────────────────
+// ─── Animated quick-action card (Glassmorphism style) ───────────────────────
 function QuickAction({ icon: Icon, title, description, href, gradient, delay = 0 }) {
   return (
     <motion.div
@@ -29,7 +31,12 @@ function QuickAction({ icon: Icon, title, description, href, gradient, delay = 0
     >
       <Link
         to={href}
-        className="group relative flex items-center gap-4 rounded-2xl p-5 border border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800/50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+        className="group relative flex items-center gap-4 rounded-2xl p-5
+          border border-slate-100 dark:border-slate-700/50
+          bg-white/90 dark:bg-slate-800/50
+          backdrop-blur-md
+          shadow-sm hover:shadow-xl hover:-translate-y-1
+          transition-all duration-300 overflow-hidden cursor-pointer"
       >
         {/* Hover glow */}
         <div className={`absolute inset-0 opacity-0 group-hover:opacity-[0.04] transition-opacity duration-500 ${gradient}`} />
@@ -48,6 +55,7 @@ function QuickAction({ icon: Icon, title, description, href, gradient, delay = 0
 
 /**
  * OverviewContent — the "index" page for the restaurant dashboard.
+ * Uses Glassmorphism aesthetic: backdrop-blur, translucent surfaces, layered depth.
  */
 function OverviewContent() {
   const { token } = useAuth();
@@ -89,12 +97,9 @@ function OverviewContent() {
     { title: 'Avg Cashback',     value: `${avgCashback.toFixed(0)}%`,            icon: BarChart3, trend: `Avg price: ${avgPrice.toFixed(0)} MAD`,     trendDirection: 'up',      iconBg: 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' },
   ];
 
+  // ── Skeleton loading state ──
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24 gap-3 text-slate-500 dark:text-slate-400">
-        <Loader2 className="w-5 h-5 animate-spin" /> Loading dashboard…
-      </div>
-    );
+    return <SkeletonDashboard />;
   }
 
   return (
@@ -106,20 +111,25 @@ function OverviewContent() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
       >
-        <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">Overview</h1>
+        <h1
+          className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight"
+          style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}
+        >
+          Overview
+        </h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">
           Welcome back! Here's a snapshot of your cashback business.
         </p>
       </motion.div>
 
-      {/* ★ Hero Wallet Card — unique branded gradient */}
+      {/* Hero Wallet Card — Glassmorphism */}
       <motion.div
         className="mb-8"
         initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.45, delay: 0.1 }}
       >
-        <div className={`relative overflow-hidden rounded-3xl p-6 sm:p-8 shadow-2xl ${
+        <div className={`relative overflow-hidden rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-sm ${
           walletBalance <= 0
             ? 'bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 shadow-amber-500/25'
             : 'bg-gradient-to-br from-[#0ea5e9] via-[#0284c7] to-[#1d4ed8] shadow-blue-500/25'
@@ -128,7 +138,7 @@ function OverviewContent() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/[0.06] rounded-full -translate-y-1/3 translate-x-1/4" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/[0.04] rounded-full translate-y-1/3 -translate-x-1/4" />
           <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-amber-400/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl" />
-          
+
           <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -142,7 +152,12 @@ function OverviewContent() {
                 </span>
               </div>
               <div className="flex items-baseline gap-3">
-                <span className="text-5xl sm:text-6xl font-black text-white tabular-nums">{walletBalance.toFixed(2)}</span>
+                <span
+                  className="text-5xl sm:text-6xl font-black text-white tabular-nums"
+                  style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}
+                >
+                  {walletBalance.toFixed(2)}
+                </span>
                 <span className="text-2xl font-bold text-white/70">WC</span>
               </div>
               <p className="text-white/60 text-sm mt-2">
@@ -153,7 +168,7 @@ function OverviewContent() {
             </div>
             <Link
               to="/restaurant-dashboard/wallet"
-              className="inline-flex items-center gap-2 rounded-2xl bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 px-5 py-3 text-sm font-bold text-white transition-all duration-300 hover:scale-105 hover:shadow-lg"
+              className="inline-flex items-center gap-2 rounded-2xl bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 px-5 py-3 text-sm font-bold text-white transition-all duration-300 hover:scale-105 active:scale-95 hover:shadow-lg cursor-pointer"
             >
               <Wallet className="w-4 h-4" />
               {walletBalance <= 0 ? 'Request Top-Up' : 'View Wallet'}
@@ -163,7 +178,7 @@ function OverviewContent() {
         </div>
       </motion.div>
 
-      {/* Metrics */}
+      {/* Metrics — Glassmorphism variant */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {metrics.map((m, i) => (
           <motion.div
@@ -172,14 +187,29 @@ function OverviewContent() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.15 + i * 0.08 }}
           >
-            <MetricCard {...m} />
+            <MetricCard {...m} variant="glass" />
           </motion.div>
         ))}
       </div>
 
+      {/* Engagement Chart */}
+      <motion.div
+        className="mb-8"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.35 }}
+      >
+        <EngagementChart title="Weekly Engagement" />
+      </motion.div>
+
       {/* Quick Actions */}
       <div className="mb-8">
-        <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-4">Quick Actions</h2>
+        <h2
+          className="text-lg font-bold text-slate-800 dark:text-white mb-4"
+          style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}
+        >
+          Quick Actions
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <QuickAction
             icon={Megaphone}
@@ -210,19 +240,22 @@ function OverviewContent() {
 
       {/* Recent Active Offers preview */}
       <motion.section
-        className="bg-white dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-700/50 shadow-sm p-6"
+        className="bg-white/90 dark:bg-slate-800/50 backdrop-blur-md rounded-3xl border border-slate-100 dark:border-slate-700/50 shadow-sm p-6"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.45 }}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+          <h2
+            className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2"
+            style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}
+          >
             <QrCode className="w-5 h-5 text-cyan-500" />
             Active Offers
           </h2>
           <Link
             to="/restaurant-dashboard/offers"
-            className="text-sm font-semibold text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1"
+            className="text-sm font-semibold text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1 cursor-pointer"
           >
             View all <ArrowRight className="w-3.5 h-3.5" />
           </Link>
@@ -243,11 +276,11 @@ function OverviewContent() {
                 initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: 0.5 + i * 0.06 }}
-                className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                className="flex items-center justify-between p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-900/60 backdrop-blur-sm border border-slate-100 dark:border-slate-700/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
               >
                 <div>
                   <p className="font-semibold text-slate-800 dark:text-white text-sm">{offer.itemName}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{offer.establishmentName} · {offer.cashbackPercent}% cashback</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{offer.establishmentName} &middot; {offer.cashbackPercent}% cashback</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-bold text-cyan-600 dark:text-cyan-400">{offer.price} MAD</p>

@@ -9,6 +9,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import MetricCard from '../components/dashboard/MetricCard';
+import { SkeletonDashboard } from '../components/ui/SkeletonLoader';
 import { apiUrl, authHeaders, parseApiResponse } from '../lib/api';
 
 // ─── Navigation Items (all wired to real routes) ────────────────────────────
@@ -19,7 +20,7 @@ const navItems = [
   { label: 'Settings',  icon: Settings,        href: '/customer-dashboard/settings' },
 ];
 
-// ─── Animated quick-action card ─────────────────────────────────────────────
+// ─── Animated quick-action card (Claymorphism style) ────────────────────────
 function QuickAction({ icon: Icon, title, description, href, gradient, delay = 0 }) {
   return (
     <motion.div
@@ -29,10 +30,15 @@ function QuickAction({ icon: Icon, title, description, href, gradient, delay = 0
     >
       <Link
         to={href}
-        className="group relative flex items-center gap-4 rounded-2xl p-5 border border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800/50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+        className="group relative flex items-center gap-4 rounded-2xl p-5
+          border-[3px] border-slate-200/80 dark:border-slate-600/50
+          bg-white dark:bg-slate-800/70
+          shadow-[4px_4px_10px_rgba(0,0,0,0.06),-2px_-2px_6px_rgba(255,255,255,0.8)]
+          dark:shadow-[4px_4px_10px_rgba(0,0,0,0.3),-2px_-2px_6px_rgba(255,255,255,0.04)]
+          hover:shadow-[6px_6px_14px_rgba(0,0,0,0.08),-3px_-3px_8px_rgba(255,255,255,0.9)]
+          dark:hover:shadow-[6px_6px_14px_rgba(0,0,0,0.4),-3px_-3px_8px_rgba(255,255,255,0.06)]
+          hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer"
       >
-        {/* Hover glow */}
-        <div className={`absolute inset-0 opacity-0 group-hover:opacity-[0.04] transition-opacity duration-500 ${gradient}`} />
         <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${gradient} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
           <Icon className="w-6 h-6 text-white" />
         </div>
@@ -48,6 +54,7 @@ function QuickAction({ icon: Icon, title, description, href, gradient, delay = 0
 
 /**
  * OverviewContent — the "index" page for the customer dashboard.
+ * Uses Claymorphism aesthetic: thick borders, double shadows, playful feel.
  */
 function OverviewContent() {
   const { token } = useAuth();
@@ -87,12 +94,9 @@ function OverviewContent() {
     { title: 'QR Scans',             value: redemptions.length.toString(),       icon: QrCode,     trend: 'Total redemptions',                         trendDirection: 'neutral', iconBg: 'bg-purple-100 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400' },
   ];
 
+  // ── Skeleton loading state ──
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24 gap-3 text-slate-500 dark:text-slate-400">
-        <Loader2 className="w-5 h-5 animate-spin" /> Loading dashboard…
-      </div>
-    );
+    return <SkeletonDashboard />;
   }
 
   return (
@@ -104,25 +108,32 @@ function OverviewContent() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
       >
-        <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">My Cashback</h1>
+        <h1
+          className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight"
+          style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}
+        >
+          My Cashback
+        </h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">
           Scan QR codes at restaurants and earn WinCoins cashback.
         </p>
       </motion.div>
 
-      {/* ★ Hero Balance Card — unique, branded, always visible */}
+      {/* Hero Balance Card */}
       <motion.div
         className="mb-8"
         initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.45, delay: 0.1 }}
       >
-        <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-[#7c3aed] via-[#6d28d9] to-[#4f46e5] shadow-2xl shadow-purple-500/25">
+        <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-[#7c3aed] via-[#6d28d9] to-[#4f46e5] shadow-2xl shadow-purple-500/25
+          border-[3px] border-purple-400/20"
+        >
           {/* Decorative orbs */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/[0.06] rounded-full -translate-y-1/3 translate-x-1/4" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/[0.04] rounded-full translate-y-1/3 -translate-x-1/4" />
           <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-amber-400/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl" />
-          
+
           <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -130,14 +141,19 @@ function OverviewContent() {
                 <span className="text-sm font-semibold text-purple-200 uppercase tracking-wider">Your Balance</span>
               </div>
               <div className="flex items-baseline gap-3">
-                <span className="text-5xl sm:text-6xl font-black text-white tabular-nums">{balance.toFixed(2)}</span>
+                <span
+                  className="text-5xl sm:text-6xl font-black text-white tabular-nums"
+                  style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}
+                >
+                  {balance.toFixed(2)}
+                </span>
                 <span className="text-2xl font-bold text-purple-200">WC</span>
               </div>
-              <p className="text-purple-200/70 text-sm mt-2">≈ {(balance * 10).toFixed(0)} MAD</p>
+              <p className="text-purple-200/70 text-sm mt-2">&asymp; {(balance * 10).toFixed(0)} MAD</p>
             </div>
             <Link
               to="/customer-dashboard/wallet"
-              className="inline-flex items-center gap-2 rounded-2xl bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 px-5 py-3 text-sm font-bold text-white transition-all duration-300 hover:scale-105 hover:shadow-lg"
+              className="inline-flex items-center gap-2 rounded-2xl bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 px-5 py-3 text-sm font-bold text-white transition-all duration-300 hover:scale-105 active:scale-95 hover:shadow-lg cursor-pointer"
             >
               <Wallet className="w-4 h-4" />
               Withdraw
@@ -147,7 +163,7 @@ function OverviewContent() {
         </div>
       </motion.div>
 
-      {/* Metrics */}
+      {/* Metrics — Claymorphism variant */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {metrics.map((m, i) => (
           <motion.div
@@ -156,14 +172,19 @@ function OverviewContent() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.15 + i * 0.08 }}
           >
-            <MetricCard {...m} />
+            <MetricCard {...m} variant="clay" />
           </motion.div>
         ))}
       </div>
 
       {/* Quick Actions */}
       <div className="mb-8">
-        <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-4">Quick Actions</h2>
+        <h2
+          className="text-lg font-bold text-slate-800 dark:text-white mb-4"
+          style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}
+        >
+          Quick Actions
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <QuickAction
             icon={MapPin}
@@ -194,20 +215,26 @@ function OverviewContent() {
 
       {/* Recent Cashback History */}
       <motion.section
-        className="bg-white dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-700/50 shadow-sm p-6"
+        className="rounded-3xl p-6 border-[3px] border-slate-200/80 dark:border-slate-600/50
+          bg-white dark:bg-slate-800/70
+          shadow-[4px_4px_10px_rgba(0,0,0,0.06),-2px_-2px_6px_rgba(255,255,255,0.8)]
+          dark:shadow-[4px_4px_10px_rgba(0,0,0,0.3),-2px_-2px_6px_rgba(255,255,255,0.04)]"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.45 }}
       >
         <div className="flex items-center justify-between gap-3 mb-6">
-          <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+          <h2
+            className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2"
+            style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}
+          >
             <QrCode className="w-5 h-5 text-purple-500" />
             Recent Cashback
           </h2>
           <button
             type="button"
             onClick={loadData}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="inline-flex items-center gap-2 rounded-xl border-2 border-slate-200 dark:border-slate-700 px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all cursor-pointer"
           >
             <RefreshCw className="w-4 h-4" />
             Refresh
@@ -232,12 +259,12 @@ function OverviewContent() {
                 initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: 0.5 + i * 0.06 }}
-                className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
               >
                 <div>
                   <p className="font-semibold text-slate-800 dark:text-white">{r.snapshotItemName}</p>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {r.offerId?.establishmentName || 'Restaurant'} · {new Date(r.redeemedAt).toLocaleDateString('fr-FR')}
+                    {r.offerId?.establishmentName || 'Restaurant'} &middot; {new Date(r.redeemedAt).toLocaleDateString('fr-FR')}
                   </p>
                 </div>
                 <div className="text-right">
@@ -249,9 +276,9 @@ function OverviewContent() {
             {redemptions.length > 5 && (
               <Link
                 to="/customer-dashboard/wallet"
-                className="block text-center text-sm font-semibold text-purple-600 dark:text-purple-400 hover:underline pt-2"
+                className="block text-center text-sm font-semibold text-purple-600 dark:text-purple-400 hover:underline pt-2 cursor-pointer"
               >
-                View all {redemptions.length} transactions →
+                View all {redemptions.length} transactions &rarr;
               </Link>
             )}
           </div>
